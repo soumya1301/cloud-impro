@@ -1,0 +1,7 @@
+Ablation_Variant,total_energy_wph,active_pms,AUR_percent,SLAv,migrated_vms,resource_imbalance
+Proposed Full Framework,6516.38,51,32.29,0.0,1,0.138
+w/o Prediction (Reactive Only),6516.38,51,32.29,0.0,1,0.138
+w/o Dynamic Thresholds (Static 75%),6516.38,51,32.29,0.0,1,0.138
+w/o ACO (Greedy First Fit),4544.2,28,65.96,0.0,0,0.1716
+w/o Migration Benefit Gating,6599.73,52,31.67,0.0,0,0.1353
+Linear Power Model (Ablation),6661.62,51,32.29,0.0,1,0.138

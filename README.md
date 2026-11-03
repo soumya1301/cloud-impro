@@ -138,3 +138,4 @@ python scripts/generate_report.py
   year={2026}
 }
 ```
+

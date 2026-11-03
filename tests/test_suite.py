@@ -124,3 +124,4 @@ def test_migration_decision():
     assert isinstance(should_migrate, (bool, np.bool_))
     assert "migration_time_seconds" in details
     assert details["migration_time_seconds"] > 0
+
