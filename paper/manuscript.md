@@ -154,12 +154,12 @@ We compare our proposed framework against five established baselines under ident
 ### 5.1 Workload Demand Prediction Performance
 Table 1 presents the performance of the proposed multivariate LSTM against Persistence and Moving Average baselines across 10-minute, 30-minute, and 60-minute prediction horizons evaluated on 86,980 held-out test windows.
 
-**Table 1: Workload Prediction Performance on Held-Out Test Data**
-| Horizon | Minutes | LSTM MAE | LSTM RMSE | LSTM $R^2$ | Pers. MAE | Pers. RMSE | Pers. $R^2$ | MA MAE | MA RMSE | MA $R^2$ |
-| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **10m** | 10 | 0.01322 | 0.02592 | 0.5186 | 0.00987 | 0.02536 | 0.5391 | 0.00839 | 0.02055 | 0.6972 |
-| **30m** | 30 | 0.01338 | **0.02640** | **0.5003** | 0.01036 | 0.02681 | 0.4850 | 0.00896 | 0.02267 | 0.6315 |
-| **60m** | 60 | 0.01388 | **0.02968** | **0.3687** | 0.01124 | 0.02968 | 0.3684 | 0.00984 | 0.02587 | 0.5203 |
+**Table 1: Workload Prediction Performance on Held-Out Test Data (Physical Unscaled Units)**
+| Horizon | Minutes | LSTM MAE | LSTM RMSE | LSTM $R^2$ | Bounded MAPE | Pers. MAE | Pers. RMSE | Pers. $R^2$ | MA MAE | MA RMSE | MA $R^2$ |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **10m** | 10 | 0.00455 | 0.01328 | 0.5924 | 31.23% | 0.00422 | 0.01387 | 0.5559 | 0.00363 | 0.01085 | 0.7279 |
+| **30m** | 30 | 0.00497 | 0.01371 | 0.5750 | 35.13% | 0.00459 | 0.01413 | 0.5488 | 0.00391 | 0.01110 | 0.7213 |
+| **60m** | 60 | 0.00531 | 0.01429 | 0.5444 | 39.78% | 0.00514 | 0.01556 | 0.4593 | 0.00432 | 0.01200 | 0.6788 |
 
 *Analysis:* Over immediate horizons (10 min), local persistence and moving averages capture high frequency autocorrelation. However, as the forecast horizon extends to 30 and 60 minutes, the LSTM's RMSE outperforms Persistence (0.02640 vs. 0.02681 at 30 min), providing stable, non-degenerative multi-step trend anticipation critical for dynamic threshold adaptation.
 

@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import numpy as np
 import pandas as pd
+import joblib
 
 from src.vm_scheduler.simulation.pm import PhysicalMachine, VirtualMachine
 from src.vm_scheduler.scheduling.placement import LSTMKMeansACOPlacer
@@ -24,8 +25,10 @@ from src.vm_scheduler.evaluation.scheduling_metrics import evaluate_cluster_perf
 from src.vm_scheduler.utils.config import setup_logger, set_seed
 
 os.makedirs("results/logs", exist_ok=True)
+os.makedirs("results/tables", exist_ok=True)
 os.makedirs("experiments/ablation", exist_ok=True)
 os.makedirs("experiments/sensitivity", exist_ok=True)
+os.makedirs("paper/tables", exist_ok=True)
 logger = setup_logger("run_ablation", log_file="results/logs/ablation.log")
 
 
@@ -33,17 +36,44 @@ def load_simulation_entities():
     df_vms = pd.read_parquet("data/processed/subset_b_vms.parquet").head(1500)
     df_pms = pd.read_parquet("data/processed/subset_b_pms.parquet").head(150)
 
+    kmeans_bundle_path = "models/checkpoints/kmeanspp_bundle.joblib"
+    if os.path.exists(kmeans_bundle_path):
+        bundle = joblib.load(kmeans_bundle_path)
+        scaler = bundle["scaler"]
+        k = bundle["best_k"]
+        kmeans_model = bundle["models"][k]
+        medians = bundle.get("medians", {})
+    else:
+        scaler, kmeans_model, medians = None, None, {}
+
     vms = []
+    cpu_int_classes = {1, 2}
+
     for idx, row in df_vms.iterrows():
+        c_req = float(row["cpu_req"])
+        m_req = float(row["mem_req"])
+
+        if scaler is not None and kmeans_model is not None:
+            cpi = medians.get("cycles_per_instruction", 1.2)
+            mai = medians.get("memory_accesses_per_instruction", 0.005)
+            vec = np.array([[c_req, c_req * 1.2, c_req * 0.1, m_req, m_req * 1.1, 1.2, cpi, mai]])
+            vec_scaled = scaler.transform(vec)
+            c_id = int(kmeans_model.predict(vec_scaled)[0])
+        else:
+            c_id = 0
+
+        is_cpu = (c_req > 0.35) or (c_id in cpu_int_classes)
+
         vm = VirtualMachine(
             vm_id=str(row["vm_id"]),
             arrival_time=float(row["arrival_time"]),
-            cpu_req=float(row["cpu_req"]),
-            mem_req=float(row["mem_req"]),
+            cpu_req=c_req,
+            mem_req=m_req,
             priority=int(row["priority"]),
             duration_seconds=float(row["duration_seconds"]),
             memory_gb=float(row["memory_gb"]),
-            is_cpu_intensive=(row["cpu_req"] > 0.40)
+            profile_class=c_id,
+            is_cpu_intensive=is_cpu
         )
         vms.append(vm)
 
@@ -72,6 +102,9 @@ def clone_cluster(pms):
         new_p.hosted_vms = {}
         new_p.current_cpu_load = 0.0
         new_p.current_mem_load = 0.0
+        new_p.predicted_cpu_load = 0.0
+        new_p.predicted_mem_load = 0.0
+        new_p.upper_threshold = new_p.base_upper_threshold
         cloned.append(new_p)
     return cloned
 
@@ -84,7 +117,7 @@ def run_configuration(
     dynamic_thresh=True,
     nonlinear_power=True,
     use_aco=True,
-    use_migration=True,
+    use_migration_gate=True,
     custom_k_exp=None
 ):
     cloned_pms = clone_cluster(pms)
@@ -100,9 +133,9 @@ def run_configuration(
             p.upper_threshold = 0.75
 
     if use_aco:
-        aco = AntColonyPlacer(num_ants=10, max_iterations=10, random_seed=42)
-        # If migration benefit gating disabled, set min_benefit to 0 to permit unconstrained migration
-        mig_mgr = MigrationManager(min_net_benefit_wh=0.5 if use_migration else -999.0)
+        aco = AntColonyPlacer(num_ants=8, max_iterations=6, random_seed=42)
+        # If migration benefit gating disabled, allow migration with negative benefit threshold
+        mig_mgr = MigrationManager(min_net_benefit_wh=0.5 if use_migration_gate else -999.0)
         placer = LSTMKMeansACOPlacer(aco_placer=aco, migration_manager=mig_mgr, dynamic_threshold=dynamic_thresh)
 
         pred_dict = predictions if use_prediction else None
@@ -147,7 +180,7 @@ def main():
     inferencer = LSTMInferencer(checkpoint_path="models/checkpoints/lstm_30m.pt")
     df_vms = pd.read_parquet("data/processed/subset_b_vms.parquet").head(1500)
     df_ts = pd.read_parquet("data/processed/subset_a_prediction_timeseries.parquet")
-    genuine_preds = inferencer.generate_vm_predictions(df_vms, df_ts)
+    genuine_preds, _ = inferencer.generate_vm_predictions(df_vms, df_ts)
 
     ablation_experiments = [
         {"id": "Proposed Full Framework", "pred": True, "dyn": True, "pwr": True, "aco": True, "mig": True},
@@ -168,7 +201,7 @@ def main():
             dynamic_thresh=exp["dyn"],
             nonlinear_power=exp["pwr"],
             use_aco=exp["aco"],
-            use_migration=exp["mig"]
+            use_migration_gate=exp["mig"]
         )
         res["Ablation_Variant"] = exp["id"]
         ablation_results.append(res)
@@ -200,7 +233,6 @@ def main():
     k_test_values = [1.0, 1.2, 1.4, 1.6, 1.8, 2.0]
 
     for k_val in k_test_values:
-        # Pass custom_k_exp explicitly
         res = run_configuration(
             vms, pms,
             predictions=genuine_preds,
@@ -214,7 +246,7 @@ def main():
             "AUR_percent": res["AUR_percent"],
             "resource_imbalance": res["resource_imbalance"]
         })
-        logger.info(f"Sensitivity k={k_val}: Energy={res['total_energy_wph']} Wh")
+        logger.info(f"Sensitivity k={k_val}: Energy={res['total_energy_wph']:.1f} Wh")
 
     df_sens = pd.DataFrame(sensitivity_results)
     out_table14 = "results/tables/table14_sensitivity_analysis.csv"

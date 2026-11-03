@@ -1,6 +1,7 @@
 """
 K-Means++ clustering and evaluation across K in {3, 4, 5, 6}.
 Generates Table 6 (Cluster Evaluation) and Table 7 (Cluster Profiles).
+Saves fitted model bundle and scaler to models/checkpoints/kmeanspp_bundle.joblib.
 """
 import os
 import sys
@@ -13,13 +14,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+import joblib
 
 from src.vm_scheduler.clustering.kmeanspp import KMeansPlusPlusEvaluator
 from src.vm_scheduler.clustering.profiling import WorkloadProfiler
 from src.vm_scheduler.utils.config import setup_logger, set_seed, load_yaml_config
 
 os.makedirs("results/logs", exist_ok=True)
+os.makedirs("results/tables", exist_ok=True)
 os.makedirs("experiments/clustering", exist_ok=True)
+os.makedirs("models/checkpoints", exist_ok=True)
 os.makedirs("paper/tables", exist_ok=True)
 logger = setup_logger("run_clustering", log_file="results/logs/clustering.log")
 
@@ -33,7 +37,7 @@ def main():
     df = pd.read_parquet(features_path)
 
     feature_cols = cfg["features_for_clustering"]
-    logger.info("Clustering features: %s", feature_cols)
+    logger.info("Clustering features (%d): %s", len(feature_cols), feature_cols)
 
     # Impute any remaining NaNs with column medians
     df_imputed = df[feature_cols].copy()
@@ -56,7 +60,6 @@ def main():
     logger.info("Evaluating K-Means++ across K in [3, 4, 5, 6]...")
     eval_df = evaluator.evaluate(X_scaled)
 
-    os.makedirs("results/tables", exist_ok=True)
     out_table6 = "results/tables/table6_kmeanspp_evaluation.csv"
     eval_df.to_csv(out_table6, index=False)
     eval_df.to_csv("paper/tables/table6_kmeanspp_evaluation.csv", index=False)
@@ -71,15 +74,17 @@ def main():
     best_k = evaluator.select_best_k(metric=cfg["best_k_criteria"])
     logger.info(f"Selected Best K based on {cfg['best_k_criteria']}: K={best_k}")
 
-    # Generate Profile Table for both K=3 (Alelyani baseline comparison) and Selected Best K
+    # Generate Profile Table for both K=3 and Selected Best K
+    all_profiles = {}
     for k in [3, best_k]:
         model = evaluator.models[k]
         labels = model.labels_
         df[f"cluster_k{k}"] = labels
 
-        # Unscale centroids back to feature scale
+        # Unscale centroids back to physical feature scale
         raw_centroids = scaler.inverse_transform(model.cluster_centers_)
         profiles = WorkloadProfiler.profile_clusters(raw_centroids, feature_cols)
+        all_profiles[k] = profiles
 
         profile_rows = []
         for c_id, prof in profiles.items():
@@ -108,6 +113,18 @@ def main():
     out_labeled = "data/processed/subset_a_vm_features_labeled.parquet"
     df.to_parquet(out_labeled, index=False)
     logger.info("Labeled VM dataset saved to %s", out_labeled)
+
+    # Save model bundle checkpoint for scheduling integration
+    bundle_path = "models/checkpoints/kmeanspp_bundle.joblib"
+    joblib.dump({
+        "scaler": scaler,
+        "models": evaluator.models,
+        "best_k": best_k,
+        "feature_cols": feature_cols,
+        "cluster_profiles": all_profiles,
+        "medians": df_imputed.median().to_dict()
+    }, bundle_path)
+    logger.info("Saved fitted K-Means++ bundle to %s", bundle_path)
 
     # Save experiment run metadata
     with open("experiments/clustering/clustering_run_meta.json", "w") as fp:

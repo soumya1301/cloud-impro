@@ -1,0 +1,3 @@
+Server_Model,Processor,Cores,RAM_GB,Network_Gbps,Idle_Power_W,Max_Power_W,Sleep_Power_W,k_nonlinearity
+HP ProLiant G5,Dual Quad-Core Intel Xeon E5430,16,32,10.0,93.7,222.0,10.0,1.4
+HP ProLiant G4,Dual-Core Intel Xeon 3.0GHz,8,16,1.0,86.0,180.0,8.0,1.4

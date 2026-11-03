@@ -1,0 +1,9 @@
+[2026-11-03 15:28:05] [INFO] [run_clustering]: Loading VM features from data/processed/subset_a_vm_features.parquet
+[2026-11-03 15:28:06] [INFO] [run_clustering]: Clustering features (8): ['cpu_util_mean', 'cpu_util_max', 'cpu_util_std', 'mem_util_mean', 'mem_util_max', 'peak_to_average_cpu_ratio', 'cycles_per_instruction', 'memory_accesses_per_instruction']
+[2026-11-03 15:28:06] [INFO] [run_clustering]: Evaluating K-Means++ across K in [3, 4, 5, 6]...
+[2026-11-03 15:28:08] [INFO] [run_clustering]: Table 6 saved to results/tables/table6_kmeanspp_evaluation.csv
+[2026-11-03 15:28:08] [INFO] [run_clustering]: Selected Best K based on silhouette: K=6
+[2026-11-03 15:28:08] [INFO] [run_clustering]: Table 7 (K=3) saved to results/tables/table7_cluster_profiles_k3.csv
+[2026-11-03 15:28:08] [INFO] [run_clustering]: Table 7 (K=6) saved to results/tables/table7_cluster_profiles_k6.csv
+[2026-11-03 15:28:08] [INFO] [run_clustering]: Labeled VM dataset saved to data/processed/subset_a_vm_features_labeled.parquet
+[2026-11-03 15:28:08] [INFO] [run_clustering]: Saved fitted K-Means++ bundle to models/checkpoints/kmeanspp_bundle.joblib

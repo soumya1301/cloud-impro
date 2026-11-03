@@ -1,0 +1,21 @@
+[2026-11-03 15:25:00] [INFO] [train_lstm]: Loading time series dataset from data/processed/subset_a_prediction_timeseries.parquet
+[2026-11-03 15:25:00] [INFO] [train_lstm]: Selected 600 representative workload entities with 42,199 observations.
+[2026-11-03 15:25:00] [INFO] [train_lstm]: Window generation stats for 10m: {'entity_col': 'collection_id', 'history_len': 12, 'horizon': 2, 'min_required_steps': 14, 'total_entities_inspected': 600, 'eligible_entities': 600, 'ineligible_entities': 0, 'total_windows_generated': 34399}
+[2026-11-03 15:25:00] [INFO] [train_lstm]: --- Training LSTM for Horizon: 10m (10 min ahead) ---
+[2026-11-03 15:25:00] [INFO] [train_lstm]: Split sizes (10m) -> Train: 24079, Val: 3439, Test: 6881
+[2026-11-03 15:25:48] [INFO] [train_lstm]: [10m] LSTM Overall - MAE: 0.00455, RMSE: 0.01328, R2: 0.5924, NMAE: 0.0149, Bounded MAPE: 31.2%
+[2026-11-03 15:25:48] [INFO] [train_lstm]: [10m] Persistence  - MAE: 0.00422, RMSE: 0.01387, R2: 0.5559, Bounded MAPE: 36.5%
+[2026-11-03 15:25:48] [INFO] [train_lstm]: [10m] Moving Avg   - MAE: 0.00363, RMSE: 0.01085, R2: 0.7279, Bounded MAPE: 28.8%
+[2026-11-03 15:25:48] [INFO] [train_lstm]: Window generation stats for 30m: {'entity_col': 'collection_id', 'history_len': 12, 'horizon': 6, 'min_required_steps': 18, 'total_entities_inspected': 600, 'eligible_entities': 600, 'ineligible_entities': 0, 'total_windows_generated': 31999}
+[2026-11-03 15:25:48] [INFO] [train_lstm]: --- Training LSTM for Horizon: 30m (30 min ahead) ---
+[2026-11-03 15:25:48] [INFO] [train_lstm]: Split sizes (30m) -> Train: 22399, Val: 3199, Test: 6401
+[2026-11-03 15:26:30] [INFO] [train_lstm]: [30m] LSTM Overall - MAE: 0.00497, RMSE: 0.01371, R2: 0.5750, NMAE: 0.0163, Bounded MAPE: 35.1%
+[2026-11-03 15:26:30] [INFO] [train_lstm]: [30m] Persistence  - MAE: 0.00459, RMSE: 0.01413, R2: 0.5488, Bounded MAPE: 37.1%
+[2026-11-03 15:26:30] [INFO] [train_lstm]: [30m] Moving Avg   - MAE: 0.00391, RMSE: 0.01110, R2: 0.7213, Bounded MAPE: 29.3%
+[2026-11-03 15:26:31] [INFO] [train_lstm]: Window generation stats for 60m: {'entity_col': 'collection_id', 'history_len': 12, 'horizon': 12, 'min_required_steps': 24, 'total_entities_inspected': 600, 'eligible_entities': 600, 'ineligible_entities': 0, 'total_windows_generated': 28399}
+[2026-11-03 15:26:31] [INFO] [train_lstm]: --- Training LSTM for Horizon: 60m (60 min ahead) ---
+[2026-11-03 15:26:31] [INFO] [train_lstm]: Split sizes (60m) -> Train: 19879, Val: 2839, Test: 5681
+[2026-11-03 15:27:05] [INFO] [train_lstm]: [60m] LSTM Overall - MAE: 0.00531, RMSE: 0.01429, R2: 0.5444, NMAE: 0.0196, Bounded MAPE: 39.8%
+[2026-11-03 15:27:05] [INFO] [train_lstm]: [60m] Persistence  - MAE: 0.00514, RMSE: 0.01556, R2: 0.4593, Bounded MAPE: 39.7%
+[2026-11-03 15:27:05] [INFO] [train_lstm]: [60m] Moving Avg   - MAE: 0.00432, RMSE: 0.01200, R2: 0.6788, Bounded MAPE: 31.4%
+[2026-11-03 15:27:05] [INFO] [train_lstm]: Prediction performance saved to results/tables/table5_prediction_performance.csv

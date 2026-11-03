@@ -1,12 +1,66 @@
 {
-  "timestamp": "2026-11-03T09:42:00",
-  "method": "K-Means++",
-  "feature_space_dimensions": 11,
-  "evaluated_k_values": [3, 4, 5, 6],
-  "optimal_k": 6,
-  "optimal_silhouette": 0.3486,
-  "optimal_calinski_harabasz": 942.42,
-  "data_source": "data/processed/subset_a_vm_features.parquet",
-  "labeled_output": "data/processed/subset_a_vm_features_labeled.parquet"
+  "timestamp": "2026-11-03T15:28:08.475269",
+  "k_values": [
+    3,
+    4,
+    5,
+    6
+  ],
+  "best_k": 6,
+  "metrics": [
+    {
+      "K": 3,
+      "silhouette_score": 0.293,
+      "davies_bouldin_index": 1.2196,
+      "calinski_harabasz_score": 773.17,
+      "inertia": 15831.5,
+      "cluster_sizes": {
+        "0": 1050,
+        "1": 12,
+        "2": 1938
+      }
+    },
+    {
+      "K": 4,
+      "silhouette_score": 0.293,
+      "davies_bouldin_index": 0.9375,
+      "calinski_harabasz_score": 843.7,
+      "inertia": 13009.37,
+      "cluster_sizes": {
+        "0": 1044,
+        "1": 1943,
+        "2": 12,
+        "3": 1
+      }
+    },
+    {
+      "K": 5,
+      "silhouette_score": 0.2905,
+      "davies_bouldin_index": 0.8979,
+      "calinski_harabasz_score": 908.4,
+      "inertia": 10843.89,
+      "cluster_sizes": {
+        "0": 949,
+        "1": 12,
+        "2": 125,
+        "3": 1913,
+        "4": 1
+      }
+    },
+    {
+      "K": 6,
+      "silhouette_score": 0.3486,
+      "davies_bouldin_index": 0.913,
+      "calinski_harabasz_score": 942.42,
+      "inertia": 9324.57,
+      "cluster_sizes": {
+        "0": 628,
+        "1": 231,
+        "2": 2006,
+        "3": 12,
+        "4": 122,
+        "5": 1
+      }
+    }
+  ]
 }
-

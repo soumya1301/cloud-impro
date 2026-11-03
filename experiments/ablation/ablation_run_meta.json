@@ -1,34 +1,34 @@
 {
-  "timestamp": "2026-11-03T13:22:50.011493",
+  "timestamp": "2026-11-03T15:35:15.144412",
   "runs": [
     {
       "Ablation_Variant": "Proposed Full Framework",
-      "total_energy_wph": 4482.16,
+      "total_energy_wph": 4479.54,
       "active_pms": 27,
-      "AUR_percent": 66.28,
+      "AUR_percent": 66.29,
       "SLAv": 0.0,
       "migrated_vms": 0,
-      "resource_imbalance": 0.1309,
+      "resource_imbalance": 0.1359,
       "placement_rate_percent": 100.0
     },
     {
       "Ablation_Variant": "w/o Prediction (Reactive Only)",
-      "total_energy_wph": 4482.16,
-      "active_pms": 27,
-      "AUR_percent": 66.28,
+      "total_energy_wph": 4697.99,
+      "active_pms": 30,
+      "AUR_percent": 61.27,
       "SLAv": 0.0,
       "migrated_vms": 0,
-      "resource_imbalance": 0.1309,
+      "resource_imbalance": 0.1648,
       "placement_rate_percent": 100.0
     },
     {
       "Ablation_Variant": "w/o Dynamic Thresholds (Static 75%)",
-      "total_energy_wph": 4482.16,
-      "active_pms": 27,
-      "AUR_percent": 66.28,
+      "total_energy_wph": 4697.99,
+      "active_pms": 30,
+      "AUR_percent": 61.27,
       "SLAv": 0.0,
       "migrated_vms": 0,
-      "resource_imbalance": 0.1309,
+      "resource_imbalance": 0.1648,
       "placement_rate_percent": 100.0
     },
     {
@@ -43,22 +43,22 @@
     },
     {
       "Ablation_Variant": "w/o Migration Benefit Gating",
-      "total_energy_wph": 4482.31,
+      "total_energy_wph": 4479.57,
       "active_pms": 27,
-      "AUR_percent": 66.28,
+      "AUR_percent": 66.29,
       "SLAv": 0.0,
-      "migrated_vms": 2,
-      "resource_imbalance": 0.1309,
+      "migrated_vms": 1,
+      "resource_imbalance": 0.136,
       "placement_rate_percent": 100.0
     },
     {
       "Ablation_Variant": "Linear Power Model (Ablation)",
-      "total_energy_wph": 4584.78,
+      "total_energy_wph": 4584.61,
       "active_pms": 27,
-      "AUR_percent": 66.37,
+      "AUR_percent": 66.27,
       "SLAv": 0.0,
       "migrated_vms": 0,
-      "resource_imbalance": 0.1299,
+      "resource_imbalance": 0.1329,
       "placement_rate_percent": 100.0
     }
   ]

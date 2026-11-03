@@ -1,0 +1,7 @@
+Algorithm,active_pms,idle_pms,total_energy_wph,SLAv,AUR_percent,energy_saving_percent
+Google Trace (Simulated),798,0,77032.51,0.0,13.37,0.0
+Modified Best Fit (MBFA),184,614,27054.43,0.0,66.44,64.88
+Modified First Fit (MFFA),154,644,24626.13,0.0,65.62,68.03
+Round Robin (RRA),798,0,77032.51,0.0,13.37,0.0
+Sercon,154,644,24626.13,0.0,65.62,68.03
+Proposed (LSTM + K-Means++ + ACO),152,646,24487.22,0.0,65.98,68.21

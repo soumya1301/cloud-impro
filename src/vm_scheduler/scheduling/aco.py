@@ -1,5 +1,7 @@
 """
 Ant Colony Optimization (ACO) algorithm for multi-objective VM placement.
+Incorporates predicted multi-dimensional demands into dynamic heuristic desirability,
+adaptive operating thresholds, and SLA risk penalization.
 """
 from typing import List, Dict, Tuple, Optional, Any
 import numpy as np
@@ -45,7 +47,8 @@ class AntColonyPlacer:
         self,
         vms: List[VirtualMachine],
         pms: List[PhysicalMachine],
-        enforce_threshold: bool = True
+        enforce_threshold: bool = True,
+        predicted_vm_demands: Optional[Dict[str, Tuple[float, float]]] = None
     ) -> Tuple[Dict[str, str], float, List[float], Dict[str, Any]]:
         """
         Executes ACO to place `vms` onto `pms`.
@@ -67,17 +70,25 @@ class AntColonyPlacer:
         idle_powers = np.array([p.idle_power_w for p in pms], dtype=np.float32)
         max_powers = np.array([p.max_power_w for p in pms], dtype=np.float32)
         k_exp = np.array([p.k_nonlinearity for p in pms], dtype=np.float32)
-        
-        # Determine operating threshold capacities
-        thresh_factor = np.array([p.upper_threshold if enforce_threshold else 1.0 for p in pms], dtype=np.float32)
-        thresh_caps = cpu_caps * thresh_factor
-        mem_thresh_caps = mem_caps * thresh_factor
+        base_thresh = np.array([p.base_upper_threshold for p in pms], dtype=np.float32)
 
-        # Pre-extract VM demands
+        # Pre-extract VM requested demands (hard physical constraints)
         vm_cpus = np.array([vm.cpu_req for vm in vms], dtype=np.float32)
         vm_mems = np.array([vm.mem_req for vm in vms], dtype=np.float32)
         vm_ids = [vm.vm_id for vm in vms]
         pm_ids = [pm.pm_id for pm in pms]
+
+        # Extract predicted demands (for dynamic thresholding and SLA risk modulation)
+        pred_cpus = np.zeros(n_vms, dtype=np.float32)
+        pred_mems = np.zeros(n_vms, dtype=np.float32)
+        for i, vm in enumerate(vms):
+            if predicted_vm_demands and vm.vm_id in predicted_vm_demands:
+                p_c, p_m = predicted_vm_demands[vm.vm_id]
+                pred_cpus[i] = p_c
+                pred_mems[i] = p_m
+            else:
+                pred_cpus[i] = vm.predicted_cpu or vm.cpu_req
+                pred_mems[i] = vm.predicted_mem or vm.mem_req
 
         # Initialize bounded pheromone matrix: shape (n_vms, n_pms)
         pheromone = np.ones((n_vms, n_pms), dtype=np.float32)
@@ -98,6 +109,7 @@ class AntColonyPlacer:
                 unplaced_vms = []
                 cpu_loads = np.zeros(n_pms, dtype=np.float32)
                 mem_loads = np.zeros(n_pms, dtype=np.float32)
+                pred_cpu_loads = np.zeros(n_pms, dtype=np.float32)
                 active_mask = np.zeros(n_pms, dtype=bool)
                 active_indices = []
 
@@ -105,13 +117,28 @@ class AntColonyPlacer:
                 for i in range(n_vms):
                     v_cpu = vm_cpus[i]
                     v_mem = vm_mems[i]
+                    p_cpu = pred_cpus[i]
+                    p_mem = pred_mems[i]
                     v_id = vm_ids[i]
 
                     feas_cand = []
                     if active_indices:
                         act_arr = np.array(active_indices, dtype=np.int32)
-                        feas = (cpu_loads[act_arr] + v_cpu <= thresh_caps[act_arr]) & \
-                               (mem_loads[act_arr] + v_mem <= mem_thresh_caps[act_arr])
+                        # Projected load including this VM's predicted demand
+                        proj_u_c = (pred_cpu_loads[act_arr] + p_cpu) / cpu_caps[act_arr]
+                        # Dynamic threshold for active candidates
+                        cand_thresh = np.where(
+                            proj_u_c > 0.65,
+                            np.maximum(0.60, base_thresh[act_arr] - np.minimum(0.10, (proj_u_c - 0.65) * 0.5 + 0.05)),
+                            base_thresh[act_arr]
+                        )
+                        # Candidate satisfies operating threshold if enforce_threshold
+                        if enforce_threshold:
+                            feas = ((cpu_loads[act_arr] + v_cpu) <= cand_thresh * cpu_caps[act_arr]) & \
+                                   ((mem_loads[act_arr] + v_mem) <= cand_thresh * mem_caps[act_arr])
+                        else:
+                            feas = ((cpu_loads[act_arr] + v_cpu) <= cpu_caps[act_arr]) & \
+                                   ((mem_loads[act_arr] + v_mem) <= mem_caps[act_arr])
                         feas_cand = act_arr[feas].tolist()
 
                     # Restricted candidate list (RCL) bound
@@ -121,7 +148,10 @@ class AntColonyPlacer:
                     # Fallback 1: Cold standby inactive hosts
                     if not feas_cand:
                         inact = np.where(~active_mask)[0]
-                        feas_inact = [j for j in inact[:10] if (v_cpu <= thresh_caps[j] and v_mem <= mem_thresh_caps[j])]
+                        feas_inact = [
+                            j for j in inact[:10]
+                            if (v_cpu <= base_thresh[j] * cpu_caps[j] and v_mem <= base_thresh[j] * mem_caps[j])
+                        ]
                         feas_cand = feas_inact[:5]
 
                     # Fallback 2: Relax threshold to prevent VM rejection while strictly respecting hard capacity
@@ -132,20 +162,32 @@ class AntColonyPlacer:
                                    (mem_loads[act_arr] + v_mem <= mem_caps[act_arr])
                             feas_cand = act_arr[feas].tolist()[:5]
 
+                    # Fallback 3: Inactive host without threshold limit
+                    if not feas_cand:
+                        inact = np.where(~active_mask)[0]
+                        feas_inact = [j for j in inact[:10] if (v_cpu <= cpu_caps[j] and v_mem <= mem_caps[j])]
+                        feas_cand = feas_inact[:5]
+
                     if not feas_cand:
                         unplaced_vms.append(v_id)
                         continue
 
                     cand_arr = np.array(feas_cand, dtype=np.int32)
 
-                    # Dynamic heuristic calculation based on instantaneous host state
+                    # Dynamic heuristic calculation based on instantaneous host state & predicted demand
                     rem_cpu = np.maximum(0.001, cpu_caps[cand_arr] - (cpu_loads[cand_arr] + v_cpu))
                     rem_mem = np.maximum(0.001, mem_caps[cand_arr] - (mem_loads[cand_arr] + v_mem))
                     balance = 1.0 / (1.0 + np.abs(rem_cpu - rem_mem))
 
-                    u_hypo = (cpu_loads[cand_arr] + v_cpu) / cpu_caps[cand_arr]
-                    p_hypo = idle_powers[cand_arr] + (max_powers[cand_arr] - idle_powers[cand_arr]) * (2.0 * u_hypo - u_hypo ** k_exp[cand_arr])
-                    heuristics = (balance / np.maximum(10.0, p_hypo)) * 100.0
+                    u_hypo = np.clip((cpu_loads[cand_arr] + v_cpu) / cpu_caps[cand_arr], 0.0, 1.0)
+                    # SPECpower power: P_idle + (P_max - P_idle) * (u ** k)
+                    p_hypo = idle_powers[cand_arr] + (max_powers[cand_arr] - idle_powers[cand_arr]) * (u_hypo ** k_exp[cand_arr])
+
+                    # Heuristic penalization for projected overload
+                    proj_ratio = (pred_cpu_loads[cand_arr] + p_cpu) / cpu_caps[cand_arr]
+                    sla_factor = np.where(proj_ratio > base_thresh[cand_arr], 0.35, 1.0)
+
+                    heuristics = (balance / np.maximum(10.0, p_hypo)) * 100.0 * sla_factor
 
                     pher = pheromone[i, cand_arr]
                     probs = (pher ** self.alpha) * (heuristics ** self.beta)
@@ -160,6 +202,7 @@ class AntColonyPlacer:
 
                     cpu_loads[chosen_j] += v_cpu
                     mem_loads[chosen_j] += v_mem
+                    pred_cpu_loads[chosen_j] += p_cpu
                     if not active_mask[chosen_j]:
                         active_mask[chosen_j] = True
                         active_indices.append(chosen_j)
@@ -172,10 +215,13 @@ class AntColonyPlacer:
                 if n_act > 0:
                     u_c = cpu_loads[act_arr] / cpu_caps[act_arr]
                     u_m = mem_loads[act_arr] / mem_caps[act_arr]
-                    p_tot = idle_powers[act_arr] + (max_powers[act_arr] - idle_powers[act_arr]) * (2.0 * u_c - u_c ** k_exp[act_arr])
+                    # SPECpower: P_idle + (P_max - P_idle) * (u ** k)
+                    p_tot = idle_powers[act_arr] + (max_powers[act_arr] - idle_powers[act_arr]) * (u_c ** k_exp[act_arr])
                     total_energy = float(np.sum(p_tot))
                     imbalance = float(np.mean(np.abs(u_c - u_m)))
-                    sla_risk = float(np.sum(np.maximum(0.0, u_c - 0.80)))
+                    # SLA risk evaluated on projected load
+                    u_proj = pred_cpu_loads[act_arr] / cpu_caps[act_arr]
+                    sla_risk = float(np.sum(np.maximum(0.0, u_proj - 0.75)))
                 else:
                     total_energy, imbalance, sla_risk = 0.0, 0.0, 0.0
 
@@ -219,31 +265,3 @@ class AntColonyPlacer:
             "placement_rate_percent": round((placed_count / max(1, n_vms)) * 100.0, 2)
         }
         return best_placement, best_fitness, convergence_curve, info
-
-    def _calculate_fitness(
-        self,
-        placement: Dict[str, str],
-        pms: List[PhysicalMachine],
-        unplaced_count: int,
-        total_vms: int
-    ) -> float:
-        """
-        Multi-objective normalized fitness:
-        J = 0.35 * Energy + 0.20 * Active_PMs + 0.15 * Imbalance + 0.10 * SLA_Risk + 0.20 * Unplaced_Penalty
-        """
-        total_energy = sum(pm.compute_current_power() for pm in pms)
-        active_pms = sum(1 for pm in pms if pm.is_active)
-
-        imbalance = 0.0
-        sla_risk = 0.0
-        if active_pms > 0:
-            active_list = [p for p in pms if p.is_active]
-            imbalance = float(np.mean([abs(p.cpu_utilization_ratio - p.mem_utilization_ratio) for p in active_list]))
-            sla_risk = float(sum(max(0.0, p.cpu_utilization_ratio - 0.80) for p in active_list))
-
-        e_norm = total_energy / (len(pms) * 135.0)
-        a_norm = active_pms / len(pms)
-        u_norm = unplaced_count / max(1, total_vms)
-
-        fitness = (0.35 * e_norm) + (0.20 * a_norm) + (0.15 * imbalance) + (0.10 * sla_risk) + (5.0 * u_norm)
-        return float(fitness)

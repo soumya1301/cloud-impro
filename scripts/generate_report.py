@@ -212,7 +212,12 @@ def plot_cluster_heatmap():
 
 def plot_scheduler_comparison():
     print("Generating Figure 6: Energy and Utilization Comparison...")
-    df_sched = pd.read_csv("results/tables/table10_baseline_comparison.csv")
+    if os.path.exists("results/tables/table10_baseline_comparison.csv"):
+        df_sched = pd.read_csv("results/tables/table10_baseline_comparison.csv")
+    elif os.path.exists("results/tables/table8_cluster_performance_comparison.csv"):
+        df_sched = pd.read_csv("results/tables/table8_cluster_performance_comparison.csv")
+    else:
+        df_sched = pd.read_csv("results/tables/table10_energy_consumption_comparison.csv")
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5))
 
