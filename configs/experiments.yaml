@@ -1,0 +1,48 @@
+# Experiment Protocol & Ablation Configuration
+random_seeds: [42, 123, 456, 789, 1011]
+
+prediction_experiments:
+  models:
+    - "multivariate_lstm"
+    - "persistence"
+    - "moving_average"
+    - "linear_regression"
+  horizons: [10, 30, 60]  # minutes
+
+clustering_experiments:
+  algorithms:
+    - "kmeans++"
+    - "standard_kmeans"
+  k_values: [3, 4, 5, 6]
+
+scheduling_experiments:
+  scales:
+    small:
+      num_vms: 1000
+      num_pms: 100
+      duration_hours: 12
+    medium:
+      num_vms: 3000
+      num_pms: 300
+      duration_hours: 24
+    full:
+      num_vms: 7644
+      num_pms: 798
+      duration_hours: 24
+
+ablations:
+  - id: "abl_lstm_vs_persistence"
+    name: "Prediction Value: LSTM vs. Persistence"
+  - id: "abl_kmeanspp_vs_kmeans"
+    name: "Clustering Value: K-Means++ vs Standard K-Means"
+  - id: "abl_aco_vs_heuristics"
+    name: "Optimization Value: ACO vs Greedy MFFA/MBFA"
+  - id: "abl_dynamic_vs_static_threshold"
+    name: "Threshold Adaptability: Dynamic vs Static 75/35"
+  - id: "abl_power_model"
+    name: "Energy Calibration: Nonlinear SPECpower vs Linear Power"
+  - id: "abl_migration_benefit"
+    name: "Migration Policy: Net-Benefit-Gated vs Unconditional MMT"
+  - id: "abl_resource_dimensions"
+    name: "Dimensionality: CPU+RAM vs Simulated 4D (CPU+RAM+NET+DISK)"
+

@@ -1,0 +1,7 @@
+K,cluster_id,label,vm_count,percentage,cpu_centroid,mem_centroid
+6,0,Balanced Moderate,628,20.93,0.0005,0.0011
+6,1,CPU-Intensive,231,7.7,0.0109,0.0017
+6,2,CPU-Intensive,2006,66.87,0.0052,0.0014
+6,3,Balanced High,12,0.4,0.0536,0.0454
+6,4,Memory-Intensive,122,4.07,0.0009,0.0172
+6,5,Low Utilization,1,0.03,0.0,0.0001

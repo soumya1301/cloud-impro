@@ -1,0 +1,15 @@
+# Migration Decision and SLA Configuration
+network:
+  bandwidth_gbps: 4.0           # 4 Gbps migration link
+  degradation_factor: 0.10      # 10% performance degradation during live migration
+
+sla:
+  max_utilization_threshold: 1.0 # 100% host saturation triggers SLATAH
+  violation_penalty_factor: 50.0
+
+cost_benefit:
+  min_net_benefit_threshold: 1.0 # Minimum net benefit (Wh) required to execute migration
+  energy_migration_overhead_multiplier: 1.2
+  allow_underloaded_consolidation: true
+  all_or_nothing_underloaded: false  # Allows selective migration if Pareto-optimal
+

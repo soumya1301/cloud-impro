@@ -1,0 +1,19 @@
+# Ant Colony Optimization (ACO) Placement Configuration
+algorithm: "ant_colony_optimization"
+num_ants: 20
+max_iterations: 50
+alpha: 1.0              # Pheromone importance
+beta: 2.0               # Heuristic desirability importance
+rho: 0.1                # Pheromone evaporation rate
+q0: 0.8                 # Exploration vs exploitation trade-off
+initial_pheromone: 1.0
+deposit_constant: 100.0
+random_seed: 42
+
+fitness_weights:
+  w_energy: 0.40        # Weight for energy consumption
+  w_active_pm: 0.25     # Weight for number of active physical machines
+  w_balance: 0.15       # Weight for CPU-memory resource balance
+  w_sla: 0.10           # Weight for SLA violation penalty
+  w_migration: 0.10     # Weight for migration cost
+

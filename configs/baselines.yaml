@@ -1,0 +1,22 @@
+# Scheduling Baseline Algorithms Configuration
+baselines:
+  - name: "first_fit"
+    description: "Classic First Fit heuristic without upper threshold"
+  - name: "best_fit"
+    description: "Classic Best Fit heuristic without upper threshold"
+  - name: "modified_first_fit"
+    description: "Modified First Fit with 75% upper utilization threshold"
+    upper_threshold: 0.75
+  - name: "modified_best_fit"
+    description: "Modified Best Fit with 75% upper utilization threshold"
+    upper_threshold: 0.75
+  - name: "sercon"
+    description: "Sercon server consolidation with all-or-nothing lower threshold"
+    upper_threshold: 0.75
+    lower_threshold: 0.35
+  - name: "round_robin"
+    description: "Cyclic distribution mimicking default Google Borg scheduler"
+    upper_threshold: 0.75
+  - name: "proposed_lstm_kmeanspp_aco"
+    description: "Proposed Framework: LSTM-Assisted, K-Means++-Driven, ACO-Optimized Scheduler"
+

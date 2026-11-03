@@ -1,0 +1,40 @@
+# Preprocessing and Feature Engineering Configuration
+features:
+  cpu:
+    - cpu_util_mean
+    - cpu_util_max
+    - cpu_util_min
+    - cpu_util_std
+    - cpu_p10
+    - cpu_p50
+    - cpu_p90
+    - cpu_p99
+  memory:
+    - mem_util_mean
+    - mem_util_max
+    - mem_util_min
+    - assigned_memory
+    - page_cache_memory
+  microarchitectural:
+    - cycles_per_instruction
+    - memory_accesses_per_instruction
+  temporal:
+    - duration_minutes
+    - peak_to_average_cpu_ratio
+
+missing_values:
+  cpi_impute_strategy: "median"
+  mai_impute_strategy: "median"
+  drop_all_zero_vms: true
+
+scaling:
+  method: "minmax"  # MinMax to [0, 1] range for LSTM and clustering
+  feature_range: [0.0, 1.0]
+
+windowing:
+  history_length: 12      # 12 steps x 5 min = 60 minutes historical window
+  forecast_horizons:
+    - 2                   # 10 minutes (2 steps ahead)
+    - 6                   # 30 minutes (6 steps ahead)
+    - 12                  # 60 minutes (12 steps ahead)
+

@@ -1,0 +1,30 @@
+# LSTM Model Architecture and Training Parameters
+model:
+  type: "multivariate_lstm"
+  input_dim: 2           # Primary dimensions: CPU and Memory
+  hidden_dim: 64
+  num_layers: 2
+  dropout: 0.2
+  output_dim: 2          # Predict future CPU and Memory
+
+training:
+  batch_size: 128
+  learning_rate: 0.001
+  weight_decay: 0.00001
+  max_epochs: 15
+  early_stopping_patience: 5
+  lr_patience: 5
+  lr_factor: 0.5
+  random_seed: 42
+  device: "cpu"          # Works without GPU, seamlessly switches to mps/cuda if available
+
+split:
+  train_ratio: 0.70
+  val_ratio: 0.10
+  test_ratio: 0.20
+  chronological: true    # Prevent temporal data leakage
+
+horizons:
+  step_10m: 2
+  step_30m: 6
+  step_60m: 12

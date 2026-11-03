@@ -1,0 +1,30 @@
+# K-Means++ Clustering Configuration
+algorithm: "kmeans++"
+evaluation_k: [3, 4, 5, 6]
+best_k_criteria: "silhouette"   # silhouette, davies_bouldin, calinski_harabasz
+n_init: 20
+max_iter: 300
+random_state: 42
+
+features_for_clustering:
+  - cpu_util_mean
+  - cpu_util_max
+  - cpu_util_std
+  - mem_util_mean
+  - mem_util_max
+  - peak_to_average_cpu_ratio
+  - cycles_per_instruction
+  - memory_accesses_per_instruction
+
+cluster_profiles:
+  k3:
+    class_1: "Low Utilization"
+    class_2: "CPU-Intensive"
+    class_3: "Memory-Intensive / Balanced"
+  k5:
+    class_1: "Low Utilization"
+    class_2: "CPU-Intensive"
+    class_3: "Memory-Intensive"
+    class_4: "Balanced"
+    class_5: "Bursty"
+

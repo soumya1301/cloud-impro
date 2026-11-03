@@ -1,0 +1,19 @@
+# Energy Model Configuration
+model_type: "nonlinear_specpower" # nonlinear_specpower, linear
+
+specpower_hp_g5:
+  sleep_w: 10.0
+  p_idle_w: 93.7
+  p_max_w: 135.0
+  k_nonlinearity: 1.4             # Calibrated exponent matching SPECpower benchmark curve
+
+specpower_hp_g4:
+  sleep_w: 10.0
+  p_idle_w: 86.0
+  p_max_w: 117.0
+  k_nonlinearity: 1.3
+
+energy_calculation:
+  sampling_interval_seconds: 300  # 5-minute intervals
+  units: "watt_hours"             # Watt-hours (Wh or Wph)
+
