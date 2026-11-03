@@ -1,11 +1,10 @@
 """
 Ant Colony Optimization (ACO) algorithm for multi-objective VM placement.
-Incorporates predicted multi-dimensional demands into dynamic heuristic desirability,
-adaptive operating thresholds, and SLA risk penalization.
+Incorporates predicted multi-dimensional demands (CPU and Memory) into dynamic heuristic desirability,
+adaptive operating thresholds, and multi-resource SLA risk penalization.
 """
 from typing import List, Dict, Tuple, Optional, Any
 import numpy as np
-import copy
 from ..simulation.pm import PhysicalMachine, VirtualMachine
 from ..energy.power_model import ServerPowerModel
 
@@ -48,15 +47,11 @@ class AntColonyPlacer:
         vms: List[VirtualMachine],
         pms: List[PhysicalMachine],
         enforce_threshold: bool = True,
+        dynamic_threshold: bool = True,
         predicted_vm_demands: Optional[Dict[str, Tuple[float, float]]] = None
     ) -> Tuple[Dict[str, str], float, List[float], Dict[str, Any]]:
         """
         Executes ACO to place `vms` onto `pms`.
-        Returns:
-            best_placement: dict mapping vm_id -> pm_id
-            best_fitness: optimal fitness score
-            convergence_curve: list of best fitness per iteration
-            placement_info: metadata on placed vs unplaced VMs
         """
         n_vms = len(vms)
         n_pms = len(pms)
@@ -79,16 +74,18 @@ class AntColonyPlacer:
         pm_ids = [pm.pm_id for pm in pms]
 
         # Extract predicted demands (for dynamic thresholding and SLA risk modulation)
+        # If predicted_vm_demands is explicitly None, forecasting is disabled (reactive mode)
+        has_predictions = predicted_vm_demands is not None
         pred_cpus = np.zeros(n_vms, dtype=np.float32)
         pred_mems = np.zeros(n_vms, dtype=np.float32)
         for i, vm in enumerate(vms):
-            if predicted_vm_demands and vm.vm_id in predicted_vm_demands:
+            if has_predictions and vm.vm_id in predicted_vm_demands:
                 p_c, p_m = predicted_vm_demands[vm.vm_id]
                 pred_cpus[i] = p_c
                 pred_mems[i] = p_m
             else:
-                pred_cpus[i] = vm.predicted_cpu or vm.cpu_req
-                pred_mems[i] = vm.predicted_mem or vm.mem_req
+                pred_cpus[i] = vm.cpu_req
+                pred_mems[i] = vm.mem_req
 
         # Initialize bounded pheromone matrix: shape (n_vms, n_pms)
         pheromone = np.ones((n_vms, n_pms), dtype=np.float32)
@@ -110,6 +107,7 @@ class AntColonyPlacer:
                 cpu_loads = np.zeros(n_pms, dtype=np.float32)
                 mem_loads = np.zeros(n_pms, dtype=np.float32)
                 pred_cpu_loads = np.zeros(n_pms, dtype=np.float32)
+                pred_mem_loads = np.zeros(n_pms, dtype=np.float32)
                 active_mask = np.zeros(n_pms, dtype=bool)
                 active_indices = []
 
@@ -124,14 +122,22 @@ class AntColonyPlacer:
                     feas_cand = []
                     if active_indices:
                         act_arr = np.array(active_indices, dtype=np.int32)
-                        # Projected load including this VM's predicted demand
+                        
+                        # Multi-resource projected load (both CPU and Memory evaluated)
                         proj_u_c = (pred_cpu_loads[act_arr] + p_cpu) / cpu_caps[act_arr]
-                        # Dynamic threshold for active candidates
-                        cand_thresh = np.where(
-                            proj_u_c > 0.65,
-                            np.maximum(0.60, base_thresh[act_arr] - np.minimum(0.10, (proj_u_c - 0.65) * 0.5 + 0.05)),
-                            base_thresh[act_arr]
-                        )
+                        proj_u_m = (pred_mem_loads[act_arr] + p_mem) / mem_caps[act_arr]
+                        proj_u_max = np.maximum(proj_u_c, proj_u_m)
+
+                        # Dynamic threshold adaptation (if dynamic_threshold is enabled)
+                        if dynamic_threshold and has_predictions:
+                            cand_thresh = np.where(
+                                proj_u_max > 0.65,
+                                np.maximum(0.60, base_thresh[act_arr] - np.minimum(0.10, (proj_u_max - 0.65) * 0.5 + 0.05)),
+                                base_thresh[act_arr]
+                            )
+                        else:
+                            cand_thresh = base_thresh[act_arr]
+
                         # Candidate satisfies operating threshold if enforce_threshold
                         if enforce_threshold:
                             feas = ((cpu_loads[act_arr] + v_cpu) <= cand_thresh * cpu_caps[act_arr]) & \
@@ -154,7 +160,7 @@ class AntColonyPlacer:
                         ]
                         feas_cand = feas_inact[:5]
 
-                    # Fallback 2: Relax threshold to prevent VM rejection while strictly respecting hard capacity
+                    # Fallback 2: Relax threshold to prevent VM rejection while strictly respecting hard physical capacity
                     if not feas_cand:
                         if active_indices:
                             act_arr = np.array(active_indices, dtype=np.int32)
@@ -162,7 +168,7 @@ class AntColonyPlacer:
                                    (mem_loads[act_arr] + v_mem <= mem_caps[act_arr])
                             feas_cand = act_arr[feas].tolist()[:5]
 
-                    # Fallback 3: Inactive host without threshold limit
+                    # Fallback 3: Inactive host with physical capacity
                     if not feas_cand:
                         inact = np.where(~active_mask)[0]
                         feas_inact = [j for j in inact[:10] if (v_cpu <= cpu_caps[j] and v_mem <= mem_caps[j])]
@@ -174,18 +180,22 @@ class AntColonyPlacer:
 
                     cand_arr = np.array(feas_cand, dtype=np.int32)
 
-                    # Dynamic heuristic calculation based on instantaneous host state & predicted demand
+                    # Dynamic heuristic calculation based on instantaneous host state & multi-resource demand
                     rem_cpu = np.maximum(0.001, cpu_caps[cand_arr] - (cpu_loads[cand_arr] + v_cpu))
                     rem_mem = np.maximum(0.001, mem_caps[cand_arr] - (mem_loads[cand_arr] + v_mem))
                     balance = 1.0 / (1.0 + np.abs(rem_cpu - rem_mem))
 
                     u_hypo = np.clip((cpu_loads[cand_arr] + v_cpu) / cpu_caps[cand_arr], 0.0, 1.0)
-                    # SPECpower power: P_idle + (P_max - P_idle) * (u ** k)
                     p_hypo = idle_powers[cand_arr] + (max_powers[cand_arr] - idle_powers[cand_arr]) * (u_hypo ** k_exp[cand_arr])
 
-                    # Heuristic penalization for projected overload
-                    proj_ratio = (pred_cpu_loads[cand_arr] + p_cpu) / cpu_caps[cand_arr]
-                    sla_factor = np.where(proj_ratio > base_thresh[cand_arr], 0.35, 1.0)
+                    # Multi-resource SLA factor penalization (evaluates both projected CPU and Memory)
+                    if has_predictions:
+                        proj_ratio_c = (pred_cpu_loads[cand_arr] + p_cpu) / cpu_caps[cand_arr]
+                        proj_ratio_m = (pred_mem_loads[cand_arr] + p_mem) / mem_caps[cand_arr]
+                        proj_ratio_max = np.maximum(proj_ratio_c, proj_ratio_m)
+                        sla_factor = np.where(proj_ratio_max > base_thresh[cand_arr], 0.35, 1.0)
+                    else:
+                        sla_factor = 1.0
 
                     heuristics = (balance / np.maximum(10.0, p_hypo)) * 100.0 * sla_factor
 
@@ -203,6 +213,7 @@ class AntColonyPlacer:
                     cpu_loads[chosen_j] += v_cpu
                     mem_loads[chosen_j] += v_mem
                     pred_cpu_loads[chosen_j] += p_cpu
+                    pred_mem_loads[chosen_j] += p_mem
                     if not active_mask[chosen_j]:
                         active_mask[chosen_j] = True
                         active_indices.append(chosen_j)
@@ -215,13 +226,16 @@ class AntColonyPlacer:
                 if n_act > 0:
                     u_c = cpu_loads[act_arr] / cpu_caps[act_arr]
                     u_m = mem_loads[act_arr] / mem_caps[act_arr]
-                    # SPECpower: P_idle + (P_max - P_idle) * (u ** k)
                     p_tot = idle_powers[act_arr] + (max_powers[act_arr] - idle_powers[act_arr]) * (u_c ** k_exp[act_arr])
                     total_energy = float(np.sum(p_tot))
                     imbalance = float(np.mean(np.abs(u_c - u_m)))
-                    # SLA risk evaluated on projected load
-                    u_proj = pred_cpu_loads[act_arr] / cpu_caps[act_arr]
-                    sla_risk = float(np.sum(np.maximum(0.0, u_proj - 0.75)))
+                    # Multi-resource SLA risk (CPU + Memory)
+                    if has_predictions:
+                        u_proj_c = pred_cpu_loads[act_arr] / cpu_caps[act_arr]
+                        u_proj_m = pred_mem_loads[act_arr] / mem_caps[act_arr]
+                        sla_risk = float(np.sum(np.maximum(0.0, u_proj_c - base_thresh[act_arr]) + np.maximum(0.0, u_proj_m - base_thresh[act_arr])))
+                    else:
+                        sla_risk = float(np.sum(np.maximum(0.0, u_c - base_thresh[act_arr]) + np.maximum(0.0, u_m - base_thresh[act_arr])))
                 else:
                     total_energy, imbalance, sla_risk = 0.0, 0.0, 0.0
 

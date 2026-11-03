@@ -1,0 +1,19 @@
+{
+  "total_vms": 7644,
+  "sum_verified": true,
+  "categories": {
+    "Category_A_Empirical": 0,
+    "Category_B_Insufficient": 0,
+    "Category_C_Request_Fallback": 7644
+  },
+  "percentages": {
+    "Category_A_Empirical": 0.0,
+    "Category_B_Insufficient": 0.0,
+    "Category_C_Request_Fallback": 100.0
+  },
+  "investigation_findings": {
+    "root_cause_1": "Disjoint identifier schemas: Subset B VMs were synthesized as vm_00000..vm_07643 from instance_events, whereas Subset A timeseries retained Borg composite task IDs (collection_id_instance_index).",
+    "root_cause_2": "Horizontal hash-sharding in Google Cluster 2019: Telemetry is distributed across 106,726 files. Single extracted shard 170 captures sparse tasks with zero ID overlap between instance_events sample and instance_usage sample.",
+    "scientific_integrity_enforcement": "Fallback predictions are strictly labeled Category C and never represented as empirical LSTM forecasts."
+  }
+}

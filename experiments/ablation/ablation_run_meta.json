@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-11-03T15:35:15.144412",
+  "timestamp": "2026-11-03T20:20:01.920622",
   "runs": [
     {
       "Ablation_Variant": "Proposed Full Framework",
@@ -13,22 +13,22 @@
     },
     {
       "Ablation_Variant": "w/o Prediction (Reactive Only)",
-      "total_energy_wph": 4697.99,
-      "active_pms": 30,
-      "AUR_percent": 61.27,
+      "total_energy_wph": 4479.54,
+      "active_pms": 27,
+      "AUR_percent": 66.29,
       "SLAv": 0.0,
       "migrated_vms": 0,
-      "resource_imbalance": 0.1648,
+      "resource_imbalance": 0.1359,
       "placement_rate_percent": 100.0
     },
     {
       "Ablation_Variant": "w/o Dynamic Thresholds (Static 75%)",
-      "total_energy_wph": 4697.99,
-      "active_pms": 30,
-      "AUR_percent": 61.27,
+      "total_energy_wph": 4479.54,
+      "active_pms": 27,
+      "AUR_percent": 66.29,
       "SLAv": 0.0,
       "migrated_vms": 0,
-      "resource_imbalance": 0.1648,
+      "resource_imbalance": 0.1359,
       "placement_rate_percent": 100.0
     },
     {

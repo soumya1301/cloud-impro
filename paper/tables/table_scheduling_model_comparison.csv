@@ -1,0 +1,4 @@
+Configuration,total_energy_wh,active_pms,sleeping_pms,resource_imbalance,SLAv,migrated_vms,migration_energy_wh,migration_time_seconds,placement_rate_percent,AUR_percent
+Proposed (LSTM + K-Means++ + ACO),24487.22,152,646,0.1752,0.0,0,0.0,0.0,100.0,65.98
+Proposed (GRU + K-Means++ + ACO),24487.22,152,646,0.1752,0.0,0,0.0,0.0,100.0,65.98
+Reactive ACO (without forecasting),24487.22,152,646,0.1752,0.0,0,0.0,0.0,100.0,65.98

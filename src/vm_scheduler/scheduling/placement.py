@@ -45,7 +45,8 @@ class LSTMKMeansACOPlacer:
             vms=vms,
             pms=pms,
             enforce_threshold=True,
-            predicted_vm_demands=predicted_vm_demands if self.dynamic_threshold else None
+            dynamic_threshold=self.dynamic_threshold,
+            predicted_vm_demands=predicted_vm_demands
         )
 
         # Step 2: Apply assignments to PM states

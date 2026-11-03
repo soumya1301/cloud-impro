@@ -133,7 +133,18 @@ class LSTMInferencer:
         provenance: Dict[str, str] = {}
         counts = {"Category_A_Empirical": 0, "Category_B_Insufficient": 0, "Category_C_Request_Fallback": 0}
 
-        grouped = timeseries_df.groupby(entity_col)
+        if entity_col not in timeseries_df.columns:
+            if "collection_id_instance_index" in timeseries_df.columns:
+                entity_col = "collection_id_instance_index"
+            elif "vm_id" in timeseries_df.columns:
+                entity_col = "vm_id"
+            else:
+                grouped = {}
+
+        if entity_col in timeseries_df.columns:
+            grouped = timeseries_df.groupby(entity_col)
+        else:
+            grouped = {}
 
         for idx, row in vms_df.iterrows():
             vm_id = str(row["vm_id"])

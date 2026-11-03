@@ -39,12 +39,10 @@ def load_simulation_entities():
     kmeans_bundle_path = "models/checkpoints/kmeanspp_bundle.joblib"
     if os.path.exists(kmeans_bundle_path):
         bundle = joblib.load(kmeans_bundle_path)
-        scaler = bundle["scaler"]
         k = bundle["best_k"]
-        kmeans_model = bundle["models"][k]
-        medians = bundle.get("medians", {})
+        profiles = bundle["cluster_profiles"].get(k, {})
     else:
-        scaler, kmeans_model, medians = None, None, {}
+        profiles = {}
 
     vms = []
     cpu_int_classes = {1, 2}
@@ -53,12 +51,15 @@ def load_simulation_entities():
         c_req = float(row["cpu_req"])
         m_req = float(row["mem_req"])
 
-        if scaler is not None and kmeans_model is not None:
-            cpi = medians.get("cycles_per_instruction", 1.2)
-            mai = medians.get("memory_accesses_per_instruction", 0.005)
-            vec = np.array([[c_req, c_req * 1.2, c_req * 0.1, m_req, m_req * 1.1, 1.2, cpi, mai]])
-            vec_scaled = scaler.transform(vec)
-            c_id = int(kmeans_model.predict(vec_scaled)[0])
+        if profiles:
+            best_cid = 0
+            min_dist = float("inf")
+            for cid, prof in profiles.items():
+                dist = (c_req - prof["cpu_centroid"]) ** 2 + (m_req - prof["mem_centroid"]) ** 2
+                if dist < min_dist:
+                    min_dist = dist
+                    best_cid = cid
+            c_id = best_cid
         else:
             c_id = 0
 

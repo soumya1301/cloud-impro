@@ -48,3 +48,7 @@ class MultivariateLSTM(nn.Module):
         preds = self.fc(last_hidden)
         return preds
 
+    def count_parameters(self) -> int:
+        """Returns total number of trainable model parameters."""
+        return sum(p.numel() for p in self.parameters() if p.requires_grad)
+
