@@ -45,3 +45,4 @@ Yes. In contrast to naive bin-packing models that treat VM migration as an insta
 2. **Dynamic Energy Surcharge:** $E_{\text{mig}} = P_{\text{NIC\_overhead}} \cdot T_{\text{mig}}$, charging 15 W of active network interface power throughout the transfer.
 3. **Net-Benefit Gating:** A candidate migration is executed *if and only if* the cumulative lifetime energy savings exceed the migration energy overhead plus an operational safety threshold ($\delta_{\min} = 0.5\text{ Wh}$).  
 As documented in Table 10 and Table 12, this economic gating prevents migration thrashing, ensuring zero SLA violations ($\text{SLAv} = 0.0$).
+

@@ -123,3 +123,4 @@ Executed via `pytest tests/test_suite.py -v`:
 - `docs/assumptions_and_limitations.md`: Comprehensive statement of engineering bounds and assumptions.
 - `docs/reproducibility.md`: Step-by-step reproduction instructions.
 - `docs/experiment_protocol.md`: Rigorous experimental protocol.
+
