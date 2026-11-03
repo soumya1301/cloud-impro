@@ -1,0 +1,11 @@
+{
+  "timestamp": "2026-11-03T09:42:00",
+  "method": "K-Means++",
+  "feature_space_dimensions": 11,
+  "evaluated_k_values": [3, 4, 5, 6],
+  "optimal_k": 6,
+  "optimal_silhouette": 0.3486,
+  "optimal_calinski_harabasz": 942.42,
+  "data_source": "data/processed/subset_a_vm_features.parquet",
+  "labeled_output": "data/processed/subset_a_vm_features_labeled.parquet"
+}

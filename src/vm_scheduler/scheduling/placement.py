@@ -3,7 +3,6 @@ Proposed Framework: LSTM-Assisted, K-Means++-Driven and ACO-Based Energy-Aware S
 """
 from typing import List, Dict, Tuple, Optional, Any
 import numpy as np
-import copy
 from ..simulation.pm import PhysicalMachine, VirtualMachine
 from .aco import AntColonyPlacer
 from .migration import MigrationManager
@@ -11,11 +10,11 @@ from .migration import MigrationManager
 
 class LSTMKMeansACOPlacer:
     """
-    Integrates:
+    Integrated Framework:
     - Step 1: Workload Profiling via K-Means++ labels
-    - Step 2: Predictive Dynamic PM Threshold adaptation
-    - Step 3: Ant Colony Optimization (ACO) global placement
-    - Step 4: Net-Benefit-Gated Consolidation & Migration
+    - Step 2: Predictive Dynamic PM Threshold adaptation using multivariate LSTM forecasts
+    - Step 3: Ant Colony Optimization (ACO) global multi-objective placement
+    - Step 4: Net-Benefit-Gated Consolidation & Live Migration
     """
 
     def __init__(
@@ -37,37 +36,47 @@ class LSTMKMeansACOPlacer:
         """
         Executes complete scheduling pipeline on `vms` across `pms`.
         """
-        # Step 1: Adapt dynamic thresholds on PMs using predictions
-        if self.dynamic_threshold and predicted_vm_demands:
-            for pm in pms:
-                # Estimate future load based on assigned VM predictions
-                pred_cpu = sum(
+        # Step 1: Adapt dynamic operating thresholds using genuine predicted demands
+        for pm in pms:
+            pm.is_dynamic_threshold_enabled = self.dynamic_threshold
+            if self.dynamic_threshold and predicted_vm_demands:
+                pred_cpu_sum = sum(
                     predicted_vm_demands.get(vm.vm_id, (vm.cpu_req, vm.mem_req))[0]
                     for vm in pm.hosted_vms.values()
                 )
-                pm.update_dynamic_threshold(pred_cpu / max(pm.cpu_capacity, 1e-6))
+                pred_mem_sum = sum(
+                    predicted_vm_demands.get(vm.vm_id, (vm.cpu_req, vm.mem_req))[1]
+                    for vm in pm.hosted_vms.values()
+                )
+                pm.update_dynamic_threshold(
+                    predicted_cpu_demand=pred_cpu_sum,
+                    predicted_mem_demand=pred_mem_sum
+                )
+            else:
+                pm.update_dynamic_threshold(0.0, 0.0)
 
-        # Step 2: ACO Placement Optimization
-        best_placement, fitness, conv_curve = self.aco_placer.optimize_placement(
+        # Step 2: Global Placement via ACO
+        best_placement, fitness, conv_curve, place_info = self.aco_placer.optimize_placement(
             vms=vms,
             pms=pms,
             enforce_threshold=True
         )
 
-        # Apply placements to actual PMs
+        # Apply assignments to PM states
         pm_dict = {p.pm_id: p for p in pms}
         for vm in vms:
             if vm.vm_id in best_placement:
                 target_pm_id = best_placement[vm.vm_id]
                 pm_dict[target_pm_id].allocate(vm)
 
-        # Step 3: Post-placement Consolidation and Selective Live Migration
+        # Step 3: Net-Benefit-Gated Live Migration for Underloaded Hosts
         active_pms = [p for p in pms if p.is_active]
         underloaded = [p for p in active_pms if p.cpu_utilization_ratio < 0.35]
         candidates = [p for p in active_pms if 0.35 <= p.cpu_utilization_ratio <= 0.70]
 
         migration_count = 0
-        total_mig_cost = 0.0
+        total_mig_time_s = 0.0
+        total_mig_energy_wh = 0.0
 
         for src in underloaded:
             vms_in_src = list(src.hosted_vms.values())
@@ -81,14 +90,19 @@ class LSTMKMeansACOPlacer:
                         tgt.allocate(vm)
                         best_placement[vm.vm_id] = tgt.pm_id
                         migration_count += 1
-                        total_mig_cost += details["migration_time_seconds"] / 3600.0 * 0.001
+                        total_mig_time_s += details.get("migration_time_seconds", 0.0)
+                        total_mig_energy_wh += details.get("migration_energy_wh", 0.0)
                         break
 
         info = {
             "best_fitness": round(fitness, 5),
             "convergence_curve": conv_curve,
             "migration_count": migration_count,
-            "migration_cost": round(total_mig_cost, 6)
+            "migration_time_seconds": round(total_mig_time_s, 2),
+            "migration_energy_wh": round(total_mig_energy_wh, 6),
+            "requested_vms": place_info["requested_vms"],
+            "placed_vms": place_info["placed_vms"],
+            "unplaced_vms": place_info["unplaced_vms"],
+            "placement_rate_percent": place_info["placement_rate_percent"]
         }
         return best_placement, info
-

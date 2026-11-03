@@ -1,0 +1,7 @@
+Algorithm,SLATAH_Pct,PDM_Pct,SLAv_Score,Migrated_VMs,Migration_Volume_GB,Migration_Time_s,Migration_Energy_Wh
+Google Trace,0.0,0.0,0.0,0,0.0,0.0,0.0
+MBFA,0.0,0.0,0.0,0,0.0,0.0,0.0
+MFFA,0.0,0.0,0.0,0,0.0,0.0,0.0
+Round Robin,0.0,0.0,0.0,0,0.0,0.0,0.0
+Sercon,0.0,0.0,0.0,0,0.0,0.0,0.0
+Proposed (LSTM+ACO),0.0,0.0,0.0,0,0.0,0.0,0.0

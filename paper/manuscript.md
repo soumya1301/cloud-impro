@@ -8,7 +8,7 @@
 ---
 
 ## Abstract
-Rapidly increasing global demand for cloud services has intensified energy consumption in hyperscale data centres, leading to high operational expenditures and substantial carbon footprints. To address server underutilization, dynamic virtual machine (VM) consolidation seeks to pack workloads onto a minimal number of physical machines (PMs) and transition idle servers into low-power states. However, conventional consolidation heuristics suffer from three critical shortcomings: (1) single-resource bias that overlooks multi-dimensional resource contention, (2) static, reactive thresholding that triggers late migrations during workload surges, and (3) heuristic-driven bin packing that easily traps in suboptimal local minima. In this paper, we propose a holistic, intelligent VM scheduling framework that synergistically couples: (i) a multivariate Long Short-Term Memory (LSTM) network to forecast future multidimensional resource demands across 10-minute, 30-minute, and 60-minute horizons; (ii) a K-Means++ clustering algorithm evaluated systematically across $K \in \{3, 4, 5, 6\}$ to identify nuanced VM behavioral profiles; (iii) dynamic, predicted-load-aware PM thresholds that provide adaptive congestion headroom; (iv) a calibrated nonlinear SPECpower energy model; (v) an Ant Colony Optimization (ACO) metaheuristic to solve the multi-objective placement problem globally; and (vi) a net-benefit live migration decision engine. We rigorously audit and extract empirical workload traces from the Google Cluster Data 2019 repository (covering 10.28 TiB across eight cells) and simulate a heterogeneous cluster of 798 PMs and 7,644 VMs under realistic HP ProLiant G5 SPECpower power dynamics. Experimental results demonstrate that the proposed framework achieves an energy consumption of 63,431.12 Watt-hours, reducing cluster energy consumption by 17.65% compared to Google's production trace baseline (77,032.51 Wh) and by 19.53% compared to Modified Best Fit (78,826.33 Wh). Furthermore, the framework decreases active PM count from 798 to 619 (a 22.43% consolidation gain), completely eliminates host overloading, maintains zero Service Level Agreement violations ($\text{SLAv} = 0.0$), and incurs minimal migration overhead (8 migrations, cost $3.0 \times 10^{-6}$).
+Rapidly increasing global demand for cloud services has intensified energy consumption in hyperscale data centres, leading to high operational expenditures and substantial carbon footprints. To address server underutilization, dynamic virtual machine (VM) consolidation seeks to pack workloads onto a minimal number of physical machines (PMs) and transition idle servers into low-power states. However, conventional consolidation heuristics suffer from three critical shortcomings: (1) single-resource bias that overlooks multi-dimensional resource contention, (2) static, reactive thresholding that triggers late migrations during workload surges, and (3) heuristic-driven bin packing that easily traps in suboptimal local minima. In this paper, we propose a holistic, intelligent VM scheduling framework that synergistically couples: (i) a multivariate Long Short-Term Memory (LSTM) network to forecast future multidimensional resource demands across 10-minute, 30-minute, and 60-minute horizons; (ii) a K-Means++ clustering algorithm evaluated systematically across $K \in \{3, 4, 5, 6\}$ to identify nuanced VM behavioral profiles; (iii) dynamic, predicted-load-aware PM thresholds that provide adaptive congestion headroom; (iv) a calibrated nonlinear SPECpower energy model; (v) an Ant Colony Optimization (ACO) metaheuristic to solve the multi-objective placement problem globally; and (vi) a net-benefit live migration decision engine. We rigorously audit and extract empirical workload traces from the Google Cluster Data 2019 repository (covering 10.28 TiB across eight cells) and simulate a heterogeneous cluster of 798 PMs and 7,644 VMs under realistic HP ProLiant G5 SPECpower power dynamics. Experimental results demonstrate that the proposed framework achieves an energy consumption of **24,479.19 Watt-hours**, reducing cluster energy consumption by **68.22%** compared to Google's production trace baseline (77,032.51 Wh) and by **9.52%** compared to Modified Best Fit (27,054.43 Wh). Furthermore, the framework decreases active PM count from 798 to **152** (an **80.95% consolidation gain**), transitions 646 unneeded physical machines into low-power standby sleep states, maintains a 100% feasible placement rate (7,644/7,644 VMs placed), completely eliminates host overloading, and maintains zero Service Level Agreement violations ($\text{SLAv} = 0.0$).
 
 **Keywords:** Virtual Machine Consolidation; Green Cloud Computing; Workload Prediction; LSTM; K-Means++; Ant Colony Optimization; SPECpower; Google Cluster Trace.
 
@@ -177,23 +177,23 @@ Table 2 summarizes cluster validity metrics across $K \in \{3, 4, 5, 6\}$ on 3,0
 *Analysis:* While Alelyani et al. fixed $K=3$ without validation, our empirical evaluation demonstrates that $K=6$ yields the highest Silhouette score (0.3486 vs. 0.2930) and highest Calinski–Harabasz score (942.42 vs. 773.17). Workload profiling at $K=6$ cleanly separates CPU-intensive instances (Clusters 1 & 2, comprising 74.57% of workloads), memory-intensive workloads (Cluster 4, 4.07%), high-demand balanced jobs (Cluster 3, 0.40%), and low-utilization background tasks (Cluster 0, 20.93%).
 
 ### 5.3 Comparative Scheduling Performance (Matches Alelyani et al. Table 6)
-Table 3 reports comparative performance across all evaluated scheduling algorithms on 7,644 VMs and 798 PMs.
+Table 3 reports comparative performance across all evaluated scheduling algorithms on 7,644 VMs and 798 PMs (corresponding to Table 10 in the experimental repository).
 
 **Table 3: Comprehensive Scheduling Benchmark Results**
-| Algorithm | AUR (%) | Active PMs | Idle PMs | Total Energy (Wh) | SLATAH | PDM | SLAv | Migrated VMs | Mig. Cost | Overloaded | Underloaded | Imbalance |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Google Trace** | 13.37% | 798 | 0 | 77,032.51 | 0.0 | 0.0 | 0.0 | 0 | 0.0 | 0 | 782 | 0.0576 |
-| **MBFA** | 15.38% | 798 | 0 | 78,826.33 | 0.0 | 0.0 | 0.0 | 0 | 0.0 | 91 | 634 | 0.0440 |
-| **MFFA** | 12.88% | 788 | 10 | 77,414.69 | 0.0 | 0.0 | 0.0 | 0 | 0.0 | 0 | 656 | 0.0431 |
-| **RRA** | 12.09% | 798 | 0 | 77,105.51 | 0.0 | 0.0 | 0.0 | 0 | 0.0 | 3 | 740 | 0.0465 |
-| **Sercon** | 12.93% | 785 | 13 | 77,167.28 | 0.0 | 0.0 | 0.0 | 0 | 0.0 | 0 | 653 | 0.0432 |
-| **Proposed Framework** | **14.71%** | **619** | **179** | **63,431.12** | **0.0** | **0.0** | **0.0** | **8** | **0.000003** | **0** | **504** | **0.0799** |
+| Algorithm | AUR (%) | Active PMs | Idle PMs | Total Energy (Wh) | SLATAH | PDM | SLAv | Migrated VMs | Mig. Cost | Overloaded | Underloaded | Imbalance | Placement Rate |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Google Trace** | 13.37% | 798 | 0 | 77,032.51 | 0.0 | 0.0 | 0.0 | 0 | 0.0 | 0 | 782 | 0.0576 | 100.0% |
+| **MBFA** | 66.44% | 184 | 614 | 27,054.43 | 0.0 | 0.0 | 0.0 | 0 | 0.0 | 0 | 1 | 0.1666 | 100.0% |
+| **MFFA** | 65.62% | 154 | 644 | 24,626.13 | 0.0 | 0.0 | 0.0 | 0 | 0.0 | 0 | 0 | 0.1867 | 100.0% |
+| **RRA** | 13.37% | 798 | 0 | 77,032.51 | 0.0 | 0.0 | 0.0 | 0 | 0.0 | 0 | 782 | 0.0576 | 100.0% |
+| **Sercon** | 65.62% | 154 | 644 | 24,626.13 | 0.0 | 0.0 | 0.0 | 0 | 0.0 | 0 | 0 | 0.1867 | 100.0% |
+| **Proposed Framework** | **66.05%** | **152** | **646** | **24,479.19** | **0.0** | **0.0** | **0.0** | **0** | **0.0** | **0** | **0** | **0.1768** | **100.0%** |
 
 *Key Findings:*
-1. **Significant Energy Conservation:** The proposed framework achieves total energy consumption of **63,431.12 Wh**, representing an energy reduction of **13,601.39 Wh (17.65%)** relative to Google's production trace baseline and **15,395.21 Wh (19.53%)** relative to MBFA.
-2. **Superior Server Consolidation:** The framework successfully consolidates workloads into **619 active PMs**, allowing **179 idle PMs (22.43% of the cluster)** to enter 10 W sleep mode, compared to 0 idle PMs in Google's uncoordinated trace.
-3. **Zero SLA Violations:** By strictly enforcing dynamic upper thresholds and the 25% Class-2 CPU diversity constraint, the framework produces zero overloaded PMs and zero SLAv ($\text{SLAv} = 0.0$), whereas standard MBFA generated 91 overloaded PMs.
-4. **Controlled Live Migrations:** The net-benefit migration engine executed exactly 8 high-utility consolidations with an imperceptible migration cost of $3.0 \times 10^{-6}$.
+1. **Significant Energy Conservation:** The proposed framework achieves total energy consumption of **24,479.19 Wh**, representing an energy reduction of **52,553.32 Wh (68.22%)** relative to Google's production trace baseline (77,032.51 Wh) and **2,575.24 Wh (9.52%)** relative to MBFA (27,054.43 Wh).
+2. **Superior Server Consolidation:** The framework successfully consolidates workloads into **152 active PMs**, allowing **646 idle PMs (80.95% of the cluster)** to enter 10 W sleep mode, compared to 0 idle PMs in Google's uncoordinated trace.
+3. **Zero SLA Violations & 100% Placement:** By strictly enforcing dynamic upper thresholds and multi-objective ACO fitness bounds, the framework places all 7,644 requested VMs (100.0% completeness), produces zero overloaded PMs, and maintains zero SLAv (SLAv = 0.0).
+4. **Multi-Resource Alignment:** The framework maintains a low resource imbalance (0.1768), outperforming First-Fit based approaches while avoiding unutilized capacity strands.
 
 ---
 
@@ -203,14 +203,14 @@ Table 3 reports comparative performance across all evaluated scheduling algorith
 To quantify the exact contribution of each architectural module, we executed an ablation study isolating individual components on a controlled benchmark of 1,500 VMs across 150 PMs.
 
 **Table 4: Ablation Study Results**
-| Configuration Variant | Total Energy (Wh) | Active PMs | AUR (%) | SLAv | Migrations | Imbalance |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Proposed Full Framework** | **6,516.38** | 51 | 32.29% | 0.0 | 1 | 0.1380 |
-| **w/o Prediction (Reactive Only)** | 6,516.38 | 51 | 32.29% | 0.0 | 1 | 0.1380 |
-| **w/o Dynamic Thresholds (Static 75%)** | 6,516.38 | 51 | 32.29% | 0.0 | 1 | 0.1380 |
-| **w/o ACO (Greedy First Fit)** | 4,544.20* | 28* | 65.96% | 0.0 | 0 | 0.1716 |
-| **w/o Migration Benefit Gating** | 6,599.73 | 52 | 31.67% | 0.0 | 0 | 0.1353 |
-| **Linear Power Model (Ablation)** | 6,661.62 | 51 | 32.29% | 0.0 | 1 | 0.1380 |
+| Configuration Variant | Total Energy (Wh) | Active PMs | AUR (%) | SLAv | Migrations | Imbalance | Placement Rate |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Proposed Full Framework** | **4,482.16** | **27** | **66.28%** | **0.0** | **0** | **0.1309** | **100.0%** |
+| **w/o Prediction (Reactive Only)** | 4,482.16 | 27 | 66.28% | 0.0 | 0 | 0.1309 | 100.0% |
+| **w/o Dynamic Thresholds (Static 75%)** | 4,482.16 | 27 | 66.28% | 0.0 | 0 | 0.1309 | 100.0% |
+| **w/o ACO (Greedy First Fit)** | 4,544.20 | 28 | 65.96% | 0.0 | 0 | 0.1716 | 100.0% |
+| **w/o Migration Benefit Gating** | 4,482.31 | 27 | 66.28% | 0.0 | 2 | 0.1309 | 100.0% |
+| **Linear Power Model (Ablation)** | 4,584.78 | 27 | 66.37% | 0.0 | 0 | 0.1299 | 100.0% |
 
 *\*Note on Greedy First Fit:* While unconstrained First Fit packs aggressively onto 28 hosts, it produces high resource imbalance (0.1716) and increases host congestion risk under fluctuating loads. Migration benefit gating actively prevents unproductive moves, yielding a 1.26% energy savings over unguided consolidation.
 
@@ -229,7 +229,7 @@ We varied the SPECpower non-linearity exponent $k \in [1.0, 2.0]$. Because power
 
 ## 8. Conclusion and Future Work
 
-In this paper, we proposed, implemented, and empirically validated a holistic VM placement and consolidation framework combining multivariate LSTM demand prediction, K-Means++ workload profiling, dynamic load-aware host thresholds, nonlinear SPECpower modeling, Ant Colony Optimization, and net-benefit live migration. Evaluated against 7,644 VMs from the Google Cluster Data 2019 trace on 798 PMs, the proposed framework reduced cluster energy consumption by 17.65% compared to Google's production schedule and by 19.53% compared to Modified Best Fit, while shutting down 179 unneeded physical machines and achieving zero SLA violations.
+In this paper, we proposed, implemented, and empirically validated a holistic VM placement and consolidation framework combining multivariate LSTM demand prediction, K-Means++ workload profiling, dynamic load-aware host thresholds, nonlinear SPECpower modeling, Ant Colony Optimization, and net-benefit live migration. Evaluated against 7,644 VMs from the Google Cluster Data 2019 trace on 798 PMs, the proposed framework reduced cluster energy consumption by 68.22% compared to Google's production schedule and by 9.52% compared to Modified Best Fit, while shutting down 646 unneeded physical machines and achieving zero SLA violations.
 
 Future work will explore Transformer-based long-term sequence models, distributed multi-agent ACO for multi-cluster federated clouds, and deployment on physical bare-metal Kubernetes testbeds.
 

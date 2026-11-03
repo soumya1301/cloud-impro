@@ -1,0 +1,65 @@
+{
+  "timestamp": "2026-11-03T13:22:50.011493",
+  "runs": [
+    {
+      "Ablation_Variant": "Proposed Full Framework",
+      "total_energy_wph": 4482.16,
+      "active_pms": 27,
+      "AUR_percent": 66.28,
+      "SLAv": 0.0,
+      "migrated_vms": 0,
+      "resource_imbalance": 0.1309,
+      "placement_rate_percent": 100.0
+    },
+    {
+      "Ablation_Variant": "w/o Prediction (Reactive Only)",
+      "total_energy_wph": 4482.16,
+      "active_pms": 27,
+      "AUR_percent": 66.28,
+      "SLAv": 0.0,
+      "migrated_vms": 0,
+      "resource_imbalance": 0.1309,
+      "placement_rate_percent": 100.0
+    },
+    {
+      "Ablation_Variant": "w/o Dynamic Thresholds (Static 75%)",
+      "total_energy_wph": 4482.16,
+      "active_pms": 27,
+      "AUR_percent": 66.28,
+      "SLAv": 0.0,
+      "migrated_vms": 0,
+      "resource_imbalance": 0.1309,
+      "placement_rate_percent": 100.0
+    },
+    {
+      "Ablation_Variant": "w/o ACO (Greedy First Fit)",
+      "total_energy_wph": 4544.2,
+      "active_pms": 28,
+      "AUR_percent": 65.96,
+      "SLAv": 0.0,
+      "migrated_vms": 0,
+      "resource_imbalance": 0.1716,
+      "placement_rate_percent": 100.0
+    },
+    {
+      "Ablation_Variant": "w/o Migration Benefit Gating",
+      "total_energy_wph": 4482.31,
+      "active_pms": 27,
+      "AUR_percent": 66.28,
+      "SLAv": 0.0,
+      "migrated_vms": 2,
+      "resource_imbalance": 0.1309,
+      "placement_rate_percent": 100.0
+    },
+    {
+      "Ablation_Variant": "Linear Power Model (Ablation)",
+      "total_energy_wph": 4584.78,
+      "active_pms": 27,
+      "AUR_percent": 66.37,
+      "SLAv": 0.0,
+      "migrated_vms": 0,
+      "resource_imbalance": 0.1299,
+      "placement_rate_percent": 100.0
+    }
+  ]
+}

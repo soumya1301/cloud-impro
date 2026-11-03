@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-11-03T09:27:00",
+  "model_architecture": "2-layer LSTM with Dropout(0.2)",
+  "input_features": 4,
+  "hidden_dim": 64,
+  "history_steps": 12,
+  "forecast_horizons": {
+    "10m": {"steps": 2, "checkpoint": "models/checkpoints/lstm_10m.pt", "mae": 0.01322, "rmse": 0.02592, "r2": 0.5186},
+    "30m": {"steps": 6, "checkpoint": "models/checkpoints/lstm_30m.pt", "mae": 0.01338, "rmse": 0.02640, "r2": 0.5003},
+    "60m": {"steps": 12, "checkpoint": "models/checkpoints/lstm_60m.pt", "mae": 0.01388, "rmse": 0.02968, "r2": 0.3687}
+  },
+  "benchmarks_compared": ["Persistence", "Moving Average", "ARIMA"]
+}

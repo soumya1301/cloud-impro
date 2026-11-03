@@ -1,0 +1,7 @@
+Algorithm,Runs,Energy_Mean_Wh,Energy_Std_Wh,Active_PMs_Mean,Active_PMs_Std,AUR_Mean_Pct,AUR_Std_Pct
+Google Trace (Default),5,77032.51,0.0,798.0,0.0,13.37,0.0
+MBFA,5,27054.43,0.0,184.0,0.0,66.44,0.0
+MFFA,5,24626.13,0.0,154.0,0.0,65.62,0.0
+Round Robin,5,77032.51,0.0,798.0,0.0,13.37,0.0
+Sercon,5,24626.13,0.0,154.0,0.0,65.62,0.0
+Proposed (LSTM+ACO),5,24479.19,1.42,152.0,0.0,66.05,0.02

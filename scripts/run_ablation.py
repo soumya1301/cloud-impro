@@ -1,11 +1,14 @@
 """
-Comprehensive ablation study and sensitivity analysis script.
+Comprehensive ablation study and sensitivity analysis script (CORRECTED).
 Generates Table 13 (Ablation Study) and Table 14 (Sensitivity Analysis).
+Saves logs to results/logs/ and run metadata to experiments/.
 """
 import os
 import sys
 import copy
+import json
 from pathlib import Path
+from datetime import datetime
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -16,19 +19,19 @@ from src.vm_scheduler.simulation.pm import PhysicalMachine, VirtualMachine
 from src.vm_scheduler.scheduling.placement import LSTMKMeansACOPlacer
 from src.vm_scheduler.scheduling.aco import AntColonyPlacer
 from src.vm_scheduler.scheduling.migration import MigrationManager
+from src.vm_scheduler.prediction.inference import LSTMInferencer
 from src.vm_scheduler.evaluation.scheduling_metrics import evaluate_cluster_performance
 from src.vm_scheduler.utils.config import setup_logger, set_seed
 
-logger = setup_logger("run_ablation")
+os.makedirs("results/logs", exist_ok=True)
+os.makedirs("experiments/ablation", exist_ok=True)
+os.makedirs("experiments/sensitivity", exist_ok=True)
+logger = setup_logger("run_ablation", log_file="results/logs/ablation.log")
 
 
 def load_simulation_entities():
-    df_vms = pd.read_parquet("data/processed/subset_b_vms.parquet")
-    df_pms = pd.read_parquet("data/processed/subset_b_pms.parquet")
-
-    # Use smaller scale for rapid, rigorous ablation across 1,500 VMs and 150 PMs
-    df_vms = df_vms.head(1500)
-    df_pms = df_pms.head(150)
+    df_vms = pd.read_parquet("data/processed/subset_b_vms.parquet").head(1500)
+    df_pms = pd.read_parquet("data/processed/subset_b_pms.parquet").head(150)
 
     vms = []
     for idx, row in df_vms.iterrows():
@@ -73,44 +76,64 @@ def clone_cluster(pms):
     return cloned
 
 
-def run_configuration(vms, pms, use_prediction=True, dynamic_thresh=True, nonlinear_power=True, use_aco=True, use_migration=True):
+def run_configuration(
+    vms,
+    pms,
+    predictions=None,
+    use_prediction=True,
+    dynamic_thresh=True,
+    nonlinear_power=True,
+    use_aco=True,
+    use_migration=True,
+    custom_k_exp=None
+):
     cloned_pms = clone_cluster(pms)
 
-    # Set power model linearity
+    # Set power model non-linearity
     for p in cloned_pms:
-        p.k_nonlinearity = 1.4 if nonlinear_power else 1.0
-
-    if not dynamic_thresh:
-        for p in cloned_pms:
+        if custom_k_exp is not None:
+            p.k_nonlinearity = custom_k_exp
+        else:
+            p.k_nonlinearity = 1.4 if nonlinear_power else 1.0
+        p.is_dynamic_threshold_enabled = dynamic_thresh
+        if not dynamic_thresh:
             p.upper_threshold = 0.75
 
     if use_aco:
         aco = AntColonyPlacer(num_ants=10, max_iterations=10, random_seed=42)
-        mig_mgr = MigrationManager(min_net_benefit_wh=0.5 if use_migration else 999.0)
+        # If migration benefit gating disabled, set min_benefit to 0 to permit unconstrained migration
+        mig_mgr = MigrationManager(min_net_benefit_wh=0.5 if use_migration else -999.0)
         placer = LSTMKMeansACOPlacer(aco_placer=aco, migration_manager=mig_mgr, dynamic_threshold=dynamic_thresh)
 
-        pred_dict = {vm.vm_id: (vm.cpu_req * 1.05, vm.mem_req * 1.02) for vm in vms} if use_prediction else None
+        pred_dict = predictions if use_prediction else None
         placement, info = placer.schedule(vms, cloned_pms, predicted_vm_demands=pred_dict)
         mig_count = info["migration_count"]
-        mig_cost = info["migration_cost"]
+        mig_time_s = info["migration_time_seconds"]
+        mig_energy_wh = info["migration_energy_wh"]
+        placed_count = info["placed_vms"]
     else:
         # Greedy heuristic baseline
         placement = {}
         mig_count = 0
-        mig_cost = 0.0
+        mig_time_s = 0.0
+        mig_energy_wh = 0.0
         for vm in vms:
             for pm in cloned_pms:
                 if pm.can_host(vm, enforce_threshold=True):
                     pm.allocate(vm)
                     placement[vm.vm_id] = pm.pm_id
                     break
+        placed_count = len(placement)
 
     metrics = evaluate_cluster_performance(
         pms=cloned_pms,
         migration_count=mig_count,
-        migration_cost=mig_cost,
+        migration_time_seconds=mig_time_s,
+        migration_energy_wh=mig_energy_wh,
         observation_hours=1.0,
-        upper_threshold=0.75
+        upper_threshold=0.75,
+        requested_vms=len(vms),
+        placed_vms=placed_count
     )
     return metrics
 
@@ -119,6 +142,12 @@ def main():
     set_seed(42)
     vms, pms = load_simulation_entities()
     logger.info(f"Loaded {len(vms)} VMs and {len(pms)} PMs for ablation suite.")
+
+    # Generate genuine model predictions for the 1,500 VMs
+    inferencer = LSTMInferencer(checkpoint_path="models/checkpoints/lstm_30m.pt")
+    df_vms = pd.read_parquet("data/processed/subset_b_vms.parquet").head(1500)
+    df_ts = pd.read_parquet("data/processed/subset_a_prediction_timeseries.parquet")
+    genuine_preds = inferencer.generate_vm_predictions(df_vms, df_ts)
 
     ablation_experiments = [
         {"id": "Proposed Full Framework", "pred": True, "dyn": True, "pwr": True, "aco": True, "mig": True},
@@ -134,6 +163,7 @@ def main():
         logger.info(f"Running ablation: {exp['id']}...")
         res = run_configuration(
             vms, pms,
+            predictions=genuine_preds,
             use_prediction=exp["pred"],
             dynamic_thresh=exp["dyn"],
             nonlinear_power=exp["pwr"],
@@ -144,45 +174,63 @@ def main():
         ablation_results.append(res)
 
     df_abl = pd.DataFrame(ablation_results)
-    cols = ["Ablation_Variant", "total_energy_wph", "active_pms", "AUR_percent", "SLAv", "migrated_vms", "resource_imbalance"]
+    cols = [
+        "Ablation_Variant", "total_energy_wph", "active_pms", "AUR_percent",
+        "SLAv", "migrated_vms", "resource_imbalance", "placement_rate_percent"
+    ]
     df_abl = df_abl[cols]
 
     out_table13 = "results/tables/table13_ablation_study.csv"
     df_abl.to_csv(out_table13, index=False)
+    df_abl.to_csv("paper/tables/table13_ablation_study.csv", index=False)
     logger.info(f"Table 13 saved to {out_table13}")
 
-    print("\n" + "="*90)
-    print("TABLE 13: ABLATION STUDY RESULTS")
-    print("="*90)
-    print(df_abl.to_string(index=False))
-    print("="*90 + "\n")
+    with open("experiments/ablation/ablation_run_meta.json", "w") as fp:
+        json.dump({"timestamp": datetime.now().isoformat(), "runs": df_abl.to_dict(orient="records")}, fp, indent=2)
 
-    # Sensitivity Analysis on ACO Weights and Exponent k
+    print("\n" + "="*100)
+    print("TABLE 13: ABLATION STUDY RESULTS (CORRECTED)")
+    print("="*100)
+    print(df_abl.to_string(index=False))
+    print("="*100 + "\n")
+
+    # SENSITIVITY ANALYSIS (CORRECTED: Propagate custom_k_exp properly)
+    logger.info("Executing corrected sensitivity analysis on power exponent k...")
     sensitivity_results = []
-    for k_exp in [1.0, 1.2, 1.4, 1.6, 1.8, 2.0]:
-        cloned = clone_cluster(pms)
-        for p in cloned:
-            p.k_nonlinearity = k_exp
-        res = run_configuration(vms, pms, nonlinear_power=True)
+    k_test_values = [1.0, 1.2, 1.4, 1.6, 1.8, 2.0]
+
+    for k_val in k_test_values:
+        # Pass custom_k_exp explicitly
+        res = run_configuration(
+            vms, pms,
+            predictions=genuine_preds,
+            nonlinear_power=True,
+            custom_k_exp=k_val
+        )
         sensitivity_results.append({
-            "k_nonlinearity": k_exp,
+            "k_nonlinearity": k_val,
             "total_energy_wph": res["total_energy_wph"],
             "active_pms": res["active_pms"],
-            "AUR_percent": res["AUR_percent"]
+            "AUR_percent": res["AUR_percent"],
+            "resource_imbalance": res["resource_imbalance"]
         })
+        logger.info(f"Sensitivity k={k_val}: Energy={res['total_energy_wph']} Wh")
 
     df_sens = pd.DataFrame(sensitivity_results)
     out_table14 = "results/tables/table14_sensitivity_analysis.csv"
     df_sens.to_csv(out_table14, index=False)
+    df_sens.to_csv("paper/tables/table14_sensitivity_analysis.csv", index=False)
     logger.info(f"Table 14 saved to {out_table14}")
 
-    print("\n" + "="*70)
-    print("TABLE 14: SENSITIVITY ANALYSIS (NONLINEARITY PARAMETER k)")
-    print("="*70)
+    with open("experiments/sensitivity/sensitivity_run_meta.json", "w") as fp:
+        json.dump({"timestamp": datetime.now().isoformat(), "runs": df_sens.to_dict(orient="records")}, fp, indent=2)
+
+    print("\n" + "="*80)
+    print("TABLE 14: SENSITIVITY ANALYSIS (NONLINEARITY PARAMETER k - CORRECTED)")
+    print("="*80)
     print(df_sens.to_string(index=False))
-    print("="*70 + "\n")
+    print("="*80 + "\n")
 
 
 if __name__ == "__main__":
     main()
-

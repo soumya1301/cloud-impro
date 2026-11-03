@@ -4,7 +4,9 @@ Generates Table 6 (Cluster Evaluation) and Table 7 (Cluster Profiles).
 """
 import os
 import sys
+import json
 from pathlib import Path
+from datetime import datetime
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -16,7 +18,10 @@ from src.vm_scheduler.clustering.kmeanspp import KMeansPlusPlusEvaluator
 from src.vm_scheduler.clustering.profiling import WorkloadProfiler
 from src.vm_scheduler.utils.config import setup_logger, set_seed, load_yaml_config
 
-logger = setup_logger("run_clustering")
+os.makedirs("results/logs", exist_ok=True)
+os.makedirs("experiments/clustering", exist_ok=True)
+os.makedirs("paper/tables", exist_ok=True)
+logger = setup_logger("run_clustering", log_file="results/logs/clustering.log")
 
 
 def main():
@@ -54,6 +59,7 @@ def main():
     os.makedirs("results/tables", exist_ok=True)
     out_table6 = "results/tables/table6_kmeanspp_evaluation.csv"
     eval_df.to_csv(out_table6, index=False)
+    eval_df.to_csv("paper/tables/table6_kmeanspp_evaluation.csv", index=False)
     logger.info("Table 6 saved to %s", out_table6)
 
     print("\n" + "="*80)
@@ -92,6 +98,7 @@ def main():
         prof_df = pd.DataFrame(profile_rows)
         out_table7 = f"results/tables/table7_cluster_profiles_k{k}.csv"
         prof_df.to_csv(out_table7, index=False)
+        prof_df.to_csv(f"paper/tables/table7_cluster_profiles_k{k}.csv", index=False)
         logger.info("Table 7 (K=%d) saved to %s", k, out_table7)
 
         print(f"\n--- Cluster Workload Characteristics (K={k}) ---")
@@ -101,6 +108,15 @@ def main():
     out_labeled = "data/processed/subset_a_vm_features_labeled.parquet"
     df.to_parquet(out_labeled, index=False)
     logger.info("Labeled VM dataset saved to %s", out_labeled)
+
+    # Save experiment run metadata
+    with open("experiments/clustering/clustering_run_meta.json", "w") as fp:
+        json.dump({
+            "timestamp": datetime.now().isoformat(),
+            "k_values": cfg["evaluation_k"],
+            "best_k": best_k,
+            "metrics": eval_df.to_dict(orient="records")
+        }, fp, indent=2)
 
 
 if __name__ == "__main__":

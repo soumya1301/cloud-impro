@@ -3,7 +3,9 @@ Multivariate LSTM training and evaluation script across 10m, 30m, and 60m foreca
 """
 import os
 import sys
+import json
 from pathlib import Path
+from datetime import datetime
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -20,7 +22,10 @@ from src.vm_scheduler.preprocessing.windowing import create_sliding_windows, Tim
 from src.vm_scheduler.preprocessing.normalization import ResourceScaler
 from src.vm_scheduler.utils.config import setup_logger, set_seed, load_yaml_config
 
-logger = setup_logger("train_lstm")
+os.makedirs("results/logs", exist_ok=True)
+os.makedirs("experiments/prediction", exist_ok=True)
+os.makedirs("paper/tables", exist_ok=True)
+logger = setup_logger("train_lstm", log_file="results/logs/train_lstm.log")
 
 
 def train_and_evaluate_horizon(
@@ -163,7 +168,15 @@ def main():
     results_df = pd.DataFrame(results)
     out_table = "results/tables/table5_prediction_performance.csv"
     results_df.to_csv(out_table, index=False)
+    results_df.to_csv("paper/tables/table5_prediction_performance.csv", index=False)
     logger.info("Prediction performance saved to %s", out_table)
+
+    with open("experiments/prediction/prediction_run_meta.json", "w") as fp:
+        json.dump({
+            "timestamp": datetime.now().isoformat(),
+            "horizons": list(horizons.keys()),
+            "results": results_df.to_dict(orient="records")
+        }, fp, indent=2)
     print("\n" + "="*80)
     print("TABLE 5: WORKLOAD PREDICTION PERFORMANCE COMPARISON")
     print("="*80)

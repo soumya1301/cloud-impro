@@ -1,0 +1,14 @@
+Parameter,Symbol,Value,Rationale
+Number of Ants (M),m,10.0,Explores diverse placement tours while ensuring linear runtime scaling
+Max Iterations,T_max,10.0,Sufficient for monotonic fitness stabilization without overfitting
+Pheromone Importance,alpha,1.0,Balanced exploration-exploitation trade-off
+Heuristic Importance,beta,2.0,Strong guidance toward power-efficient and balanced servers
+Evaporation Rate,rho,0.1,Prevents premature convergence to local suboptima
+Pseudorandom Choice Parameter,q_0,0.8,"80% greedy exploitation, 20% probabilistic exploration"
+Min Pheromone Bound,tau_min,0.01,Prevents stagnation and search freezing
+Max Pheromone Bound,tau_max,10.0,Bounds maximum pheromone saturation
+Energy Weight in Fitness,w_e,0.35,Primary objective for carbon and cost reduction
+Active PM Weight in Fitness,w_a,0.2,Server consolidation incentive
+Imbalance Weight in Fitness,w_b,0.15,Multi-resource alignment penalty
+SLA Risk Weight in Fitness,w_sla,0.1,Buffer against performance degradation
+Unplaced Penalty Weight,w_u,500.0,Guarantees 100% complete feasible placement

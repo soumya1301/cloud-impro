@@ -1,7 +1,7 @@
-Algorithm,AUR_percent,active_pms,idle_pms,total_energy_wph,SLATAH,PDM,SLAv,migrated_vms,migration_cost,overloaded_pms,underloaded_pms,resource_imbalance
-Google Trace (Simulated),13.37,798,0,77032.51,0.0,0.0,0.0,0,0.0,0,782,0.0576
-Modified Best Fit (MBFA),15.38,798,0,78826.33,0.0,0.0,0.0,0,0.0,91,634,0.044
-Modified First Fit (MFFA),12.88,788,10,77414.69,0.0,0.0,0.0,0,0.0,0,656,0.0431
-Round Robin (RRA),12.09,798,0,77105.51,0.0,0.0,0.0,0,0.0,3,740,0.0465
-Sercon,12.93,785,13,77167.28,0.0,0.0,0.0,0,0.0,0,653,0.0432
-Proposed (LSTM + K-Means++ + ACO),14.71,619,179,63431.12,0.0,0.0,0.0,8,3e-06,0,504,0.0799
+Algorithm,AUR_percent,active_pms,idle_pms,total_energy_wph,SLATAH,PDM,SLAv,migrated_vms,migration_time_seconds,migration_energy_wh,overloaded_pms,underloaded_pms,resource_imbalance,requested_vms,placed_vms,placement_rate_percent
+Google Trace (Simulated),13.37,798,0,77032.51,0.0,0.0,0.0,0,0.0,0.0,0,782,0.0576,7644,7644,100.0
+Modified Best Fit (MBFA),66.44,184,614,27054.43,0.0,0.0,0.0,0,0.0,0.0,0,1,0.1666,7644,7644,100.0
+Modified First Fit (MFFA),65.62,154,644,24626.13,0.0,0.0,0.0,0,0.0,0.0,0,0,0.1867,7644,7644,100.0
+Round Robin (RRA),13.37,798,0,77032.51,0.0,0.0,0.0,0,0.0,0.0,0,782,0.0576,7644,7644,100.0
+Sercon,65.62,154,644,24626.13,0.0,0.0,0.0,0,0.0,0.0,0,0,0.1867,7644,7644,100.0
+Proposed (LSTM + K-Means++ + ACO),66.05,152,646,24479.19,0.0,0.0,0.0,0,0.0,0.0,0,0,0.1768,7644,7644,100.0

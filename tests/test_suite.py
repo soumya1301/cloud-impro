@@ -1,5 +1,17 @@
 """
 Comprehensive automated unit and regression test suite.
+Covers:
+1. Telemetry schema & dimension verification
+2. Resource scaling & sliding window integrity
+3. Multivariate LSTM architecture & forward pass
+4. Prediction metrics computation
+5. SPECpower nonlinear power model calibration
+6. PM hard physical capacity constraints & dynamic thresholds
+7. Dynamic threshold adaptation under predicted loads
+8. ACO placement feasibility, dynamic heuristics & unplaced tracking
+9. Net-benefit live migration decision & lifetime evaluation
+10. VM allocation integrity (duplicate prevention, negative load guard)
+11. Sensitivity parameter propagation (k-nonlinearity)
 """
 import pytest
 import numpy as np
@@ -16,13 +28,15 @@ from src.vm_scheduler.energy.power_model import ServerPowerModel
 from src.vm_scheduler.simulation.pm import PhysicalMachine, VirtualMachine
 from src.vm_scheduler.scheduling.aco import AntColonyPlacer
 from src.vm_scheduler.scheduling.migration import MigrationManager
+from src.vm_scheduler.scheduling.placement import LSTMKMeansACOPlacer
 
 
 def test_schema_dimension_verification():
     inspector = SchemaInspector()
     fields = {
         "average_usage": "struct<cpus: double, memory: double>",
-        "cycles_per_instruction": "double"
+        "cycles_per_instruction": "double",
+        "memory_accesses_per_instruction": "double"
     }
     dims = inspector.verify_resource_dimensions(fields)
     assert dims["CPU"] is True
@@ -92,7 +106,26 @@ def test_pm_hard_capacity_constraints():
     assert pm.can_host(vm2, enforce_threshold=False) is False
 
 
+def test_dynamic_threshold_adaptation():
+    """Verify that dynamic threshold backs off under high load and expands under low load."""
+    pm = PhysicalMachine(pm_id="pm_dyn", cpu_capacity=1.0, mem_capacity=1.0, upper_threshold=0.75)
+    pm.is_dynamic_threshold_enabled = True
+
+    # High predicted future demand -> threshold backs off to provide headroom
+    pm.update_dynamic_threshold(predicted_cpu_demand=0.85, predicted_mem_demand=0.85)
+    thresh_high = pm.upper_threshold
+    assert thresh_high < 0.75
+
+    # Low predicted future demand -> threshold allows higher consolidation
+    pm.update_dynamic_threshold(predicted_cpu_demand=0.15, predicted_mem_demand=0.15)
+    thresh_low = pm.upper_threshold
+    assert thresh_low > thresh_high
+    # Hard bounds respected
+    assert 0.60 <= pm.upper_threshold <= 0.90
+
+
 def test_aco_placement_feasibility():
+    """Verify ACO finds feasible placement without exceeding capacity."""
     pms = [
         PhysicalMachine(pm_id=f"pm_{i}", cpu_capacity=1.0, mem_capacity=1.0, upper_threshold=0.8)
         for i in range(5)
@@ -102,9 +135,13 @@ def test_aco_placement_feasibility():
         for i in range(10)
     ]
     aco = AntColonyPlacer(num_ants=5, max_iterations=3, random_seed=42)
-    placement, fitness, _ = aco.optimize_placement(vms, pms, enforce_threshold=True)
+    placement, fitness, conv, info = aco.optimize_placement(vms, pms, enforce_threshold=True)
 
     assert len(placement) == 10
+    assert info["placed_vms"] == 10
+    assert info["unplaced_vms"] == 0
+    assert info["placement_rate_percent"] == 100.0
+
     # Verify no PM is overcommitted
     load_cpu = {p.pm_id: 0.0 for p in pms}
     for vm in vms:
@@ -125,3 +162,50 @@ def test_migration_decision():
     assert "migration_time_seconds" in details
     assert details["migration_time_seconds"] > 0
 
+
+def test_vm_allocation_integrity():
+    """Verify duplicate allocation prevention and negative load protection."""
+    pm = PhysicalMachine(pm_id="pm_int", cpu_capacity=1.0, mem_capacity=1.0)
+    vm = VirtualMachine(vm_id="vm_dup", arrival_time=0.0, cpu_req=0.3, mem_req=0.3)
+
+    # Initial allocation succeeds
+    pm.allocate(vm)
+    assert pm.current_cpu_load == pytest.approx(0.3)
+    assert len(pm.hosted_vms) == 1
+
+    # can_host returns False for already hosted VM
+    assert pm.can_host(vm) is False
+
+    # Duplicate allocation raises ValueError
+    with pytest.raises(ValueError, match="already allocated"):
+        pm.allocate(vm)
+    assert len(pm.hosted_vms) == 1
+
+    # Release VM restores zero load
+    released = pm.release("vm_dup")
+    assert released.vm_id == "vm_dup"
+    assert pm.current_cpu_load == pytest.approx(0.0)
+    assert len(pm.hosted_vms) == 0
+
+    # Releasing non-existent VM returns None and does not make load negative
+    assert pm.release("vm_nonexistent") is None
+    assert pm.current_cpu_load >= 0.0
+
+
+def test_sensitivity_k_nonlinearity_propagation():
+    """Verify that varying k-nonlinearity parameter monotonically changes calculated power."""
+    pms_k1 = [PhysicalMachine(pm_id="pm_1", k_nonlinearity=1.0)]
+    pms_k2 = [PhysicalMachine(pm_id="pm_2", k_nonlinearity=2.0)]
+    vm = VirtualMachine(vm_id="vm_load", arrival_time=0.0, cpu_req=0.5, mem_req=0.5)
+
+    pms_k1[0].allocate(vm)
+    pms_k2[0].allocate(vm)
+
+    power_k1 = pms_k1[0].compute_current_power()
+    power_k2 = pms_k2[0].compute_current_power()
+
+    # Under 50% load, u ** k:
+    # k=1.0: 0.5^1 = 0.50 -> power = 93.7 + (135-93.7)*0.50 = 114.35 W
+    # k=2.0: 0.5^2 = 0.25 -> power = 93.7 + (135-93.7)*0.25 = 104.025 W
+    # Higher k results in lower power for sub-1.0 load
+    assert power_k1 > power_k2
