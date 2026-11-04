@@ -1,141 +1,351 @@
-# LSTM-Assisted, K-Means++-Driven, and ACO-Based Energy-Aware VM Scheduling
+# Energy-Aware Virtual Machine Scheduling Using Google Cluster Data 2019
 
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+A research project exploring **predictive workload analysis and energy-aware Virtual Machine (VM) scheduling** in cloud data centres using Google Cluster Data 2019.
 
-A research implementation, experimental evaluation framework, and academic manuscript extending the VM placement methodology described in **Alelyani et al. (2026)** (*Journal of Cloud Computing*, 15:37). Grounded in the **Google Cluster Data 2019** dataset and calibrated against the **SPECpower_ssj2008** benchmark for HP ProLiant G5 and G4 enterprise servers.
+The project combines workload preprocessing, K-Means++ clustering, deep-learning-based CPU and memory forecasting, physical-machine (PM) energy modelling, and Ant Colony Optimization (ACO) for VM placement. It also evaluates GRU and LSTM forecasting architectures and compares scheduling outcomes against baseline approaches.
 
 ---
 
-## Key Framework Innovations
-- **Multivariate LSTM Workload Forecasting:** Predicts future CPU and RAM demands at 10m, 30m, and 60m horizons.
-- **K-Means++ Workload Profiling:** Systematically evaluated across $K \in \{3, 4, 5, 6\}$ with Silhouette, Davies-Bouldin, and Calinski-Harabasz metrics ($K=6$ selected as optimal).
-- **Dynamic Predicted-Load-Aware PM Thresholds:** Backs off host threshold during predicted traffic surges to prevent SLA violations.
-- **Calibrated SPECpower Nonlinear Energy Model:** $P(u) = P_{\text{idle}} + (P_{\text{max}} - P_{\text{idle}}) u^k$ ($k=1.4$).
-- **Ant Colony Optimization (ACO) VM Placement:** Multi-objective metaheuristic optimizing energy, active hosts, resource balance, and SLA risk.
-- **Net-Benefit-Gated Live Migration:** Migrates VMs only when energy saved exceeds migration cost and degradation penalties.
+## 1. Project Overview
 
----
+Cloud data centres consume substantial energy while managing workloads with changing resource requirements. Efficient VM placement can improve resource utilization and reduce unnecessary physical-machine power consumption.
 
-## Repository Structure
+This project investigates an integrated framework that uses historical workload information to support VM scheduling decisions.
+
+The main research objectives are:
+
+- Analyse real-world cloud workload characteristics.
+- Extract and preprocess CPU and memory utilization data.
+- Identify workload patterns using K-Means++ clustering.
+- Forecast future CPU and memory demand using LSTM and GRU models.
+- Model physical-machine energy consumption using a nonlinear power function.
+- Explore energy-aware VM placement using Ant Colony Optimization.
+- Evaluate migration costs, SLA-related metrics and energy consumption.
+- Compare forecasting architectures and scheduling baselines.
+
+## 2. Research Framework
+
+The implemented research pipeline consists of the following stages:
+
+1. **Dataset acquisition and audit:** Examine Google Cluster Data 2019 and its available workload tables.
+2. **Data preprocessing:** Prepare workload records, handle missing values and construct normalized features.
+3. **Feature engineering:** Extract CPU, memory and workload characteristics.
+4. **Workload profiling:** Apply K-Means++ clustering to identify workload groups.
+5. **Workload forecasting:** Train and evaluate LSTM and GRU models for CPU and memory prediction.
+6. **Energy modelling:** Estimate PM power consumption using a nonlinear utilization-based model.
+7. **VM scheduling:** Evaluate resource-feasible VM placement using ACO and scheduling baselines.
+8. **Migration analysis:** Examine migration costs and potential energy benefits.
+9. **Experimental evaluation:** Compare forecasting accuracy, energy consumption, utilization, SLA violations and other scheduling metrics.
+
+## 3. Dataset: Google Cluster Data 2019
+
+The project uses **Google Cluster Data 2019**, a publicly available trace of Borg cluster workload activity.
+
+The dataset contains information about machine characteristics, workload events, collection events and periodic instance resource usage.
+
+### Dataset tables
+
+| Dataset table | Purpose |
+|---|---|
+| `instance_usage` | Periodic CPU and memory utilization measurements |
+| `instance_events` | Instance lifecycle events |
+| `collection_events` | Collection and workload lifecycle information |
+| `machine_events` | Physical-machine events and characteristics |
+| `machine_attributes` | Machine attribute information |
+
+### Local dataset organization
+
 ```text
-.
-├── configs/               # Modular YAML configuration files (data, lstm, clustering, aco, etc.)
-├── data/
-│   ├── manifests/         # Google Cluster Data 2019 manifest and inventory summaries
-│   └── processed/         # Extracted experimental Subsets A (ML/Profiling) and B (Scheduling)
-├── docs/                  # Detailed documentation & audits
-│   ├── initial_cloud_data_audit.md
-│   └── reference_paper_analysis.md
-├── models/
-│   └── checkpoints/       # Trained PyTorch LSTM checkpoints (10m, 30m, 60m)
-├── paper/                 # Academic publication assets
-│   ├── manuscript.md      # Full academic research paper
-│   ├── references.bib     # Complete BibTeX bibliography
-│   └── figures/           # Publication-quality figures (300 DPI)
-├── results/
-│   ├── tables/            # Benchmark results, evaluation metrics, ablation tables (CSV)
-│   ├── figures/           # Generated PNG visualisations
-│   └── predictions/       # Compressed test set predictions (.npz)
-├── scripts/               # End-to-end execution scripts
-│   ├── extract_subset.py
-│   ├── train_lstm.py
-│   ├── run_clustering.py
-│   ├── run_scheduling.py
-│   ├── run_ablation.py
-│   └── generate_report.py
-├── src/vm_scheduler/      # Modular Python package
-│   ├── data/
-│   ├── preprocessing/
-│   ├── features/
-│   ├── prediction/
-│   ├── clustering/
-│   ├── simulation/
-│   ├── scheduling/
-│   ├── energy/
-│   ├── baselines/
-│   ├── evaluation/
-│   └── utils/
-└── tests/                 # Automated pytest regression suite
+data/
+├── raw/
+│   └── Sampled source Parquet files
+├── samples/
+│   └── Small dataset samples
+├── interim/
+│   └── Intermediate processed features
+├── processed/
+│   ├── subset_a_prediction_timeseries.parquet
+│   ├── subset_a_vm_features.parquet
+│   ├── subset_a_vm_features_labeled.parquet
+│   ├── subset_b_vms.parquet
+│   └── subset_b_pms.parquet
+├── manifests/
+│   ├── google_cluster_2019_full_manifest.csv
+│   └── google_cluster_2019_inventory_summary.csv
+└── parquet_previews/
+    └── CSV previews of Parquet datasets
 ```
 
----
+**Important dataset note:** The repository contains sampled and processed data, not a complete local copy of the approximately 10.28 TiB source dataset. Extraction coverage and data limitations are documented in the dataset audit.
 
-## Quickstart & Reproducibility Guide
+## 4. Workload Profiling and Clustering
 
-### 1. Installation
-Clone this repository and install dependencies in a Python 3.11+ environment:
+K-Means++ is used to group workloads according to their resource characteristics.
+
+The clustering experiments examine different cluster configurations, including:
+
+- K = 3
+- K = 4
+- K = 5
+- K = 6
+
+Cluster evaluation considers standard measures such as:
+
+- Silhouette Score
+- Davies–Bouldin Index
+- Calinski–Harabasz Index
+
+The processed VM feature dataset also contains K-Means labels for K = 3 and K = 6.
+
+## 5. Workload Forecasting: LSTM and GRU
+
+Two recurrent neural-network architectures are implemented and evaluated.
+
+### LSTM
+
+The Long Short-Term Memory model is used to learn temporal patterns in CPU and memory utilization.
+
+### GRU
+
+The Gated Recurrent Unit model provides an alternative recurrent architecture with fewer trainable parameters in the evaluated configuration.
+
+### Forecasting configuration
+
+| Parameter | Configuration |
+|---|---|
+| Input features | CPU and memory utilization |
+| Forecast horizons | 10, 30 and 60 minutes |
+| LSTM architecture | Two-layer recurrent model |
+| GRU architecture | Two-layer recurrent model |
+| Hidden dimension | 64 |
+| Output | CPU and memory demand |
+
+### Forecasting evaluation
+
+The models are compared using:
+
+- Mean Absolute Error (MAE)
+- Root Mean Squared Error (RMSE)
+- R² score
+- Normalized MAE
+- Bounded MAPE
+- Training time
+- Inference latency
+- Trainable parameter count
+
+Moving-average and persistence forecasting methods are also considered as reference baselines.
+
+**Current finding:** LSTM performs slightly better than GRU on overall MAE and R² in the reported evaluation. However, the moving-average baseline achieves lower MAE at all three forecast horizons. GRU has approximately 23.98% fewer trainable parameters than LSTM in the evaluated configuration.
+
+## 6. Energy Modelling and VM Scheduling
+
+The scheduling framework represents physical machines using resource capacities and power characteristics.
+
+The nonlinear power model is:
+
+\[
+P(u)=P_{\mathrm{idle}}+
+(P_{\mathrm{max}}-P_{\mathrm{idle}})u^k
+\]
+
+Where:
+
+- \(P(u)\): Estimated power at utilization \(u\)
+- \(P_{\mathrm{idle}}\): Idle power
+- \(P_{\mathrm{max}}\): Maximum power
+- \(k\): Nonlinearity parameter
+
+### Ant Colony Optimization
+
+ACO is used to explore VM-to-PM placement decisions while considering resource feasibility and energy-related objectives.
+
+The scheduling experiments also consider:
+
+- CPU and memory capacity constraints
+- Active and sleeping physical machines
+- PM utilization
+- Energy consumption
+- SLA violations
+- VM migration count
+
+### Migration analysis
+
+Migration decisions are evaluated in terms of potential energy savings and migration cost. The objective is to avoid migrations that do not provide a sufficient benefit.
+
+## 7. Experimental Evaluation and Results
+
+The project includes forecasting benchmarks, scheduling comparisons, component ablations and sensitivity analysis.
+
+### Forecasting comparison
+
+The reported LSTM and GRU experiments cover 10-minute, 30-minute and 60-minute prediction horizons.
+
+The current results indicate:
+
+- LSTM achieves slightly better overall forecasting accuracy than GRU.
+- GRU requires fewer trainable parameters.
+- GRU offers a computational-efficiency trade-off.
+- Moving-average forecasting remains a strong baseline.
+
+### Scheduling experiments
+
+The reported full-scale scheduling experiment contains:
+
+| Parameter | Evaluated scale |
+|---|---:|
+| Virtual machines | 7,644 |
+| Physical machines | 798 |
+
+The reported energy consumption for the proposed scheduling configurations is 24,487.22 Wh.
+
+A significant qualification is that the LSTM-assisted ACO, GRU-assisted ACO and reactive ACO configurations produce identical reported scheduling outcomes in this experiment. Consequently, the current evidence does not establish that forecasting improves placement decisions over reactive ACO.
+
+### Ablation and sensitivity studies
+
+The repository includes experiments examining:
+
+- Forecasting contribution
+- Dynamic threshold contribution
+- ACO placement contribution
+- Migration gating
+- Nonlinear energy modelling
+- Sensitivity to the energy-model nonlinearity parameter
+
+The results and their limitations are described in the research reports.
+
+## 8. Repository Structure
+
+```text
+cloud-impro/
+│
+├── archive/
+├── configs/
+│
+├── data/
+│   ├── raw/
+│   ├── samples/
+│   ├── interim/
+│   ├── processed/
+│   ├── manifests/
+│   └── parquet_previews/
+│
+├── docs/
+│   ├── initial_cloud_data_audit.md
+│   ├── current_research_results_and_progress.md
+│   ├── google_cluster_data_2019_dataset_and_preprocessing.md
+│   ├── gru_lstm_comparative_validation_report.md
+│   ├── gru_vs_lstm_comparative_analysis.md
+│   ├── research_results_executive_summary.md
+│   └── research_figures/
+│
+├── experiments/
+├── models/
+├── paper/
+├── results/
+│
+├── scripts/
+│   ├── generate_docs_figures.py
+│   ├── generate_gru_figures.py
+│   └── run_scheduling_gru_vs_lstm.py
+│
+├── src/
+│   └── vm_scheduler/
+│       ├── data/
+│       ├── preprocessing/
+│       ├── features/
+│       ├── prediction/
+│       ├── clustering/
+│       ├── simulation/
+│       ├── scheduling/
+│       ├── energy/
+│       ├── baselines/
+│       ├── evaluation/
+│       └── utils/
+│
+├── tests/
+├── CITATION.cff
+├── LICENSE
+├── pyproject.toml
+├── requirements.txt
+└── README.md
+```
+
+## 9. Installation and Reproducibility
+
+### Requirements
+
+- Python 3.11 or later
+- Git
+- pip
+- Dependencies listed in `requirements.txt`
+
+### Clone the repository
+
 ```bash
+git clone https://github.com/soumya1301/cloud-impro.git
+cd cloud-impro
+```
+
+### Install dependencies
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 pip install -e .
 ```
 
-### 2. Run Automated Test Suite
+### Run automated tests
+
 ```bash
-pytest tests/test_suite.py
+PYTHONPATH=src python -m pytest tests/test_suite.py -v
 ```
 
-### 3. Step-by-Step Phase Execution Commands
+The repository includes scripts for forecasting, scheduling, comparative evaluation and figure generation. Consult each script and its configuration before running experiments. Some scripts require previously generated datasets or model checkpoints.
 
-#### Step 1: Targeted Dataset Extraction
-Extract Subsets A and B from the audited Google Cluster Data 2019 trace:
-```bash
-python scripts/extract_subset.py
-```
+## 10. Research Documentation
 
-#### Step 2: Train Multivariate LSTM Forecaster
-Train the 2-layer multivariate LSTM across 10m, 30m, and 60m forecast horizons:
-```bash
-python scripts/train_lstm.py
-```
+Detailed methodology, results and limitations are available in the `docs/` directory.
 
-#### Step 3: Run K-Means++ Clustering & Profiling
-Evaluate cluster validity across $K \in \{3, 4, 5, 6\}$ and assign interpretable workload labels:
-```bash
-python scripts/run_clustering.py
-```
+| Document | Description |
+|---|---|
+| `current_research_results_and_progress.md` | Overall implementation and experimental progress |
+| `gru_vs_lstm_comparative_analysis.md` | Technical comparison of GRU and LSTM |
+| `google_cluster_data_2019_dataset_and_preprocessing.md` | Dataset audit and preprocessing methodology |
+| `research_results_executive_summary.md` | Summary of research findings |
+| `gru_lstm_comparative_validation_report.md` | Detailed GRU/LSTM validation report |
+| `initial_cloud_data_audit.md` | Initial cloud dataset inventory and extraction audit |
 
-#### Step 4: Run Comparative Scheduling Benchmarks
-Simulate 7,644 VMs across 798 PMs and benchmark against Google Trace, MBFA, MFFA, Sercon, and Round Robin:
-```bash
-python scripts/run_scheduling.py
-```
+## 11. Limitations and Future Work
 
-#### Step 5: Execute Ablation Studies and Sensitivity Analysis
-Quantify component contributions and power model non-linearity:
-```bash
-python scripts/run_ablation.py
-```
+The current implementation and experiments have several limitations that must be considered when interpreting the results.
 
-#### Step 6: Generate Publication Figures and Final Report
-Render 300 DPI publication plots to `results/figures/` and `paper/figures/`:
-```bash
-python scripts/generate_report.py
-```
+1. **Dataset coverage:** Only a subset of the available Google Cluster Data 2019 Parquet shards has been extracted and processed.
+2. **Workload identity:** The forecasting and scheduling datasets have an identifier-provenance limitation; the workload entities used in scheduling cannot all be directly mapped to the original forecasting sequences.
+3. **Forecasting baselines:** Moving-average forecasting currently outperforms the recurrent models on MAE.
+4. **Scheduling integration:** Forecast-assisted scheduling has not yet demonstrated a measurable advantage over reactive ACO in the reported full-scale experiment.
+5. **Migration behaviour:** The reported full-scale scheduling experiment produces zero migrations.
+6. **Resource dimensions:** The available telemetry and implemented experiments do not establish complete network and disk-I/O forecasting.
+
+Future work should improve workload-to-scheduler identity mapping, validate forecasting-driven placement decisions, expand targeted trace extraction, and evaluate the framework under additional workload conditions.
+
+## 12. License
+
+This project is distributed under the MIT License. See [LICENSE](LICENSE).
+
+## 13. Acknowledgements
+
+The project uses Google Cluster Data 2019 for workload analysis and references SPECpower-related server power characteristics for energy modelling.
+
+Dataset: [Google Cluster Data 2019](https://github.com/google/cluster-data)
 
 ---
 
-## Key Experimental Results Summary
-
-| Metric | Google Trace | MBFA | MFFA | Sercon | Round Robin | **Proposed Framework** |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Total Energy (Wh)** | 77,032.51 | 78,826.33 | 77,414.69 | 77,167.28 | 77,105.51 | **63,431.12** (**-17.65%**) |
-| **Active PMs (of 798)** | 798 | 798 | 788 | 785 | 798 | **619** (**-22.43%**) |
-| **Idle PMs in Sleep** | 0 | 0 | 10 | 13 | 0 | **179** |
-| **Overloaded PMs** | 0 | 91 | 0 | 0 | 3 | **0** |
-| **SLA Violations (SLAv)** | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | **0.0** |
-| **Migrated VMs** | 0 | 0 | 0 | 0 | 0 | **8** |
-
----
-
-## Citation
-```bibtex
-@article{vm_scheduling_2026,
-  title={Predictive, Workload-Aware, and Energy-Proportional Virtual Machine Consolidation in Cloud Data Centres: An LSTM, K-Means++, and Ant Colony Optimization Framework},
-  author={Research Team},
-  journal={IEEE Transactions on Cloud Computing},
-  year={2026}
-}
-```
+**Project:** Energy-Aware Virtual Machine Scheduling  
+**Dataset:** Google Cluster Data 2019  
+**Forecasting Models:** LSTM and GRU  
+**Clustering:** K-Means++  
+**Scheduling:** Ant Colony Optimization  
+**Language:** Python  
+**Repository:** https://github.com/soumya1301/cloud-impro
 
