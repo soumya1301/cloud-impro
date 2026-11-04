@@ -49,3 +49,6 @@ credentials.json
 scratch/
 tmp/
 
+
+# Local spreadsheet copies (original data is stored in Parquet)
+data/processed/*.xlsx

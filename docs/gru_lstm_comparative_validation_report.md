@@ -1,11 +1,11 @@
 # Comparative Scientific Validation Report: GRU vs. LSTM Demand Forecasting and Downstream Scheduling in Cloud Data Centres
 
-**Document Reference:** `docs/gru_lstm_comparative_validation_report.md`  
-**Execution Date:** November 2026  
-**Git Branch:** `scientific_validation_correction`  
-**Evaluation Platform:** Apple Silicon / macOS Darwin, Python 3.12, PyTorch 2.5, Scikit-Learn 1.5  
-**Trace Provenance:** Google Cluster Data 2019 (Borg Workload Telemetry)  
-**Cluster Scale:** 7,644 Virtual Machines, 798 Heterogeneous Physical Machines  
+**Document Reference:** `docs/gru_lstm_comparative_validation_report.md`
+**Execution Date:** November 2026
+**Git Branch:** `scientific_validation_correction`
+**Evaluation Platform:** Apple Silicon / macOS Darwin, Python 3.12, PyTorch 2.5, Scikit-Learn 1.5
+**Trace Provenance:** Google Cluster Data 2019 (Borg Workload Telemetry)
+**Cluster Scale:** 7,644 Virtual Machines, 798 Heterogeneous Physical Machines
 
 ---
 
