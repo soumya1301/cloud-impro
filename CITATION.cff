@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use this research software or manuscript, please cite it as below."
+authors:
+  - name: "Research Team"
+title: "Predictive, Workload-Aware, and Energy-Proportional Virtual Machine Consolidation in Cloud Data Centres: An LSTM, K-Means++, and Ant Colony Optimization Framework"
+version: 0.1.0
+date-released: 2026-11-03
+url: "https://github.com/cloud-research/lstm-kmeanspp-aco-vm-scheduling"
+

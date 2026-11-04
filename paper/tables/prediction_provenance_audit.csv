@@ -1,0 +1,4 @@
+Category,Count,Percentage,Description
+Category A: Empirical Historical Observations,0,0.0,VMs with >= 12 empirical historical time-series observations in trace
+Category B: Insufficient Historical Observations,0,0.0,VMs present in trace with < 12 empirical observations (mean utilization used)
+Category C: Request-Based Fallback,7644,100.0,VMs with no historical trace observations; demand estimated via resource requests and workload profiles

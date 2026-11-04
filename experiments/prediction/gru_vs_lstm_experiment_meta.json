@@ -1,0 +1,352 @@
+{
+  "timestamp": "2026-11-03T20:10:52.384766",
+  "horizons": [
+    "10m",
+    "30m",
+    "60m"
+  ],
+  "results": [
+    {
+      "horizon": "10m",
+      "minutes": 10,
+      "lstm": {
+        "overall": {
+          "mae": 0.00455,
+          "rmse": 0.01328,
+          "nmae": 0.01495,
+          "mape": 292.7,
+          "mape_bounded": 31.23,
+          "r2": 0.5924
+        },
+        "cpu": {
+          "mae": 0.00643,
+          "rmse": 0.01692,
+          "nmae": 0.02112,
+          "mape": 469.87,
+          "mape_bounded": 39.43,
+          "r2": 0.5586
+        },
+        "mem": {
+          "mae": 0.00267,
+          "rmse": 0.00815,
+          "nmae": 0.01879,
+          "mape": 115.54,
+          "mape_bounded": 20.34,
+          "r2": 0.6936
+        },
+        "params": 52834,
+        "train_time_s": 48.0,
+        "latency_ms": 3.4058
+      },
+      "gru": {
+        "overall": {
+          "mae": 0.0047,
+          "rmse": 0.01366,
+          "nmae": 0.01542,
+          "mape": 287.09,
+          "mape_bounded": 32.35,
+          "r2": 0.569
+        },
+        "cpu": {
+          "mae": 0.00679,
+          "rmse": 0.01767,
+          "nmae": 0.0223,
+          "mape": 466.61,
+          "mape_bounded": 40.35,
+          "r2": 0.5187
+        },
+        "mem": {
+          "mae": 0.0026,
+          "rmse": 0.0078,
+          "nmae": 0.0183,
+          "mape": 107.56,
+          "mape_bounded": 21.71,
+          "r2": 0.7194
+        },
+        "params": 40162,
+        "train_time_s": 40.66,
+        "latency_ms": 3.5719
+      },
+      "pers": {
+        "overall": {
+          "mae": 0.00422,
+          "rmse": 0.01387,
+          "nmae": 0.01385,
+          "mape": 197.68,
+          "mape_bounded": 36.53,
+          "r2": 0.5559
+        },
+        "cpu": {
+          "mae": 0.00648,
+          "rmse": 0.01861,
+          "nmae": 0.02127,
+          "mape": 294.48,
+          "mape_bounded": 49.19,
+          "r2": 0.4662
+        },
+        "mem": {
+          "mae": 0.00196,
+          "rmse": 0.00618,
+          "nmae": 0.01374,
+          "mape": 100.89,
+          "mape_bounded": 19.72,
+          "r2": 0.8239
+        }
+      },
+      "ma": {
+        "overall": {
+          "mae": 0.00363,
+          "rmse": 0.01085,
+          "nmae": 0.01191,
+          "mape": 238.03,
+          "mape_bounded": 28.76,
+          "r2": 0.7279
+        },
+        "cpu": {
+          "mae": 0.00552,
+          "rmse": 0.0145,
+          "nmae": 0.0181,
+          "mape": 379.94,
+          "mape_bounded": 37.79,
+          "r2": 0.6758
+        },
+        "mem": {
+          "mae": 0.00174,
+          "rmse": 0.00503,
+          "nmae": 0.01225,
+          "mape": 96.12,
+          "mape_bounded": 16.78,
+          "r2": 0.8834
+        }
+      }
+    },
+    {
+      "horizon": "30m",
+      "minutes": 30,
+      "lstm": {
+        "overall": {
+          "mae": 0.00497,
+          "rmse": 0.01371,
+          "nmae": 0.0163,
+          "mape": 334.92,
+          "mape_bounded": 35.13,
+          "r2": 0.575
+        },
+        "cpu": {
+          "mae": 0.0071,
+          "rmse": 0.01761,
+          "nmae": 0.02331,
+          "mape": 566.57,
+          "mape_bounded": 40.85,
+          "r2": 0.5345
+        },
+        "mem": {
+          "mae": 0.00283,
+          "rmse": 0.00812,
+          "nmae": 0.01991,
+          "mape": 103.26,
+          "mape_bounded": 27.52,
+          "r2": 0.6983
+        },
+        "params": 52834,
+        "train_time_s": 48.0,
+        "latency_ms": 5.5055
+      },
+      "gru": {
+        "overall": {
+          "mae": 0.0051,
+          "rmse": 0.01433,
+          "nmae": 0.01675,
+          "mape": 370.41,
+          "mape_bounded": 35.14,
+          "r2": 0.5361
+        },
+        "cpu": {
+          "mae": 0.0074,
+          "rmse": 0.01872,
+          "nmae": 0.02429,
+          "mape": 635.83,
+          "mape_bounded": 41.82,
+          "r2": 0.4741
+        },
+        "mem": {
+          "mae": 0.00281,
+          "rmse": 0.00775,
+          "nmae": 0.01973,
+          "mape": 104.99,
+          "mape_bounded": 26.25,
+          "r2": 0.7252
+        },
+        "params": 40162,
+        "train_time_s": 38.97,
+        "latency_ms": 4.4054
+      },
+      "pers": {
+        "overall": {
+          "mae": 0.00459,
+          "rmse": 0.01413,
+          "nmae": 0.01505,
+          "mape": 275.99,
+          "mape_bounded": 37.15,
+          "r2": 0.5488
+        },
+        "cpu": {
+          "mae": 0.00697,
+          "rmse": 0.01883,
+          "nmae": 0.02287,
+          "mape": 455.99,
+          "mape_bounded": 48.78,
+          "r2": 0.468
+        },
+        "mem": {
+          "mae": 0.0022,
+          "rmse": 0.0067,
+          "nmae": 0.01548,
+          "mape": 95.98,
+          "mape_bounded": 21.66,
+          "r2": 0.7948
+        }
+      },
+      "ma": {
+        "overall": {
+          "mae": 0.00391,
+          "rmse": 0.0111,
+          "nmae": 0.01285,
+          "mape": 314.56,
+          "mape_bounded": 29.26,
+          "r2": 0.7213
+        },
+        "cpu": {
+          "mae": 0.00583,
+          "rmse": 0.01467,
+          "nmae": 0.01914,
+          "mape": 528.94,
+          "mape_bounded": 37.31,
+          "r2": 0.6772
+        },
+        "mem": {
+          "mae": 0.002,
+          "rmse": 0.00561,
+          "nmae": 0.01404,
+          "mape": 100.17,
+          "mape_bounded": 18.55,
+          "r2": 0.8559
+        }
+      }
+    },
+    {
+      "horizon": "60m",
+      "minutes": 60,
+      "lstm": {
+        "overall": {
+          "mae": 0.00531,
+          "rmse": 0.01429,
+          "nmae": 0.01956,
+          "mape": 372.11,
+          "mape_bounded": 39.78,
+          "r2": 0.5444
+        },
+        "cpu": {
+          "mae": 0.00781,
+          "rmse": 0.01841,
+          "nmae": 0.02877,
+          "mape": 625.63,
+          "mape_bounded": 49.63,
+          "r2": 0.4956
+        },
+        "mem": {
+          "mae": 0.00281,
+          "rmse": 0.00832,
+          "nmae": 0.01979,
+          "mape": 118.59,
+          "mape_bounded": 26.61,
+          "r2": 0.6908
+        },
+        "params": 52834,
+        "train_time_s": 48.0,
+        "latency_ms": 5.3789
+      },
+      "gru": {
+        "overall": {
+          "mae": 0.00571,
+          "rmse": 0.01478,
+          "nmae": 0.02102,
+          "mape": 457.86,
+          "mape_bounded": 36.44,
+          "r2": 0.5124
+        },
+        "cpu": {
+          "mae": 0.0082,
+          "rmse": 0.01908,
+          "nmae": 0.03019,
+          "mape": 790.49,
+          "mape_bounded": 45.47,
+          "r2": 0.458
+        },
+        "mem": {
+          "mae": 0.00321,
+          "rmse": 0.00853,
+          "nmae": 0.02262,
+          "mape": 125.22,
+          "mape_bounded": 24.34,
+          "r2": 0.6754
+        },
+        "params": 40162,
+        "train_time_s": 33.66,
+        "latency_ms": 3.5718
+      },
+      "pers": {
+        "overall": {
+          "mae": 0.00514,
+          "rmse": 0.01556,
+          "nmae": 0.01894,
+          "mape": 384.53,
+          "mape_bounded": 39.68,
+          "r2": 0.4593
+        },
+        "cpu": {
+          "mae": 0.00775,
+          "rmse": 0.02067,
+          "nmae": 0.02856,
+          "mape": 657.35,
+          "mape_bounded": 50.98,
+          "r2": 0.3645
+        },
+        "mem": {
+          "mae": 0.00253,
+          "rmse": 0.00758,
+          "nmae": 0.0178,
+          "mape": 111.71,
+          "mape_bounded": 24.55,
+          "r2": 0.7436
+        }
+      },
+      "ma": {
+        "overall": {
+          "mae": 0.00432,
+          "rmse": 0.012,
+          "nmae": 0.01589,
+          "mape": 398.64,
+          "mape_bounded": 31.45,
+          "r2": 0.6788
+        },
+        "cpu": {
+          "mae": 0.00643,
+          "rmse": 0.01586,
+          "nmae": 0.02369,
+          "mape": 687.9,
+          "mape_bounded": 39.72,
+          "r2": 0.6255
+        },
+        "mem": {
+          "mae": 0.0022,
+          "rmse": 0.00601,
+          "nmae": 0.01548,
+          "mape": 109.37,
+          "mape_bounded": 20.38,
+          "r2": 0.8388
+        }
+      }
+    }
+  ]
+}

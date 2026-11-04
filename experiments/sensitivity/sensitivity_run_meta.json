@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-11-03T20:20:37.781808",
+  "runs": [
+    {
+      "k_nonlinearity": 1.0,
+      "total_energy_wph": 4584.61,
+      "active_pms": 27,
+      "AUR_percent": 66.27,
+      "resource_imbalance": 0.1329
+    },
+    {
+      "k_nonlinearity": 1.2,
+      "total_energy_wph": 4529.79,
+      "active_pms": 27,
+      "AUR_percent": 66.37,
+      "resource_imbalance": 0.1296
+    },
+    {
+      "k_nonlinearity": 1.4,
+      "total_energy_wph": 4479.54,
+      "active_pms": 27,
+      "AUR_percent": 66.29,
+      "resource_imbalance": 0.1359
+    },
+    {
+      "k_nonlinearity": 1.6,
+      "total_energy_wph": 4432.43,
+      "active_pms": 27,
+      "AUR_percent": 66.37,
+      "resource_imbalance": 0.1281
+    },
+    {
+      "k_nonlinearity": 1.8,
+      "total_energy_wph": 4391.28,
+      "active_pms": 27,
+      "AUR_percent": 66.22,
+      "resource_imbalance": 0.1381
+    },
+    {
+      "k_nonlinearity": 2.0,
+      "total_energy_wph": 4349.42,
+      "active_pms": 27,
+      "AUR_percent": 66.65,
+      "resource_imbalance": 0.142
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+Algorithm,AUR_percent,active_pms,idle_pms,total_energy_wph,SLATAH,PDM,SLAv,migrated_vms,migration_time_seconds,migration_energy_wh,overloaded_pms,underloaded_pms,resource_imbalance,requested_vms,placed_vms,placement_rate_percent
+Google Trace (Simulated),13.37,798,0,77032.51,0.0,0.0,0.0,0,0.0,0.0,0,782,0.0576,7644,7644,100.0
+Modified Best Fit (MBFA),66.44,184,614,27054.43,0.0,0.0,0.0,0,0.0,0.0,0,1,0.1666,7644,7644,100.0
+Modified First Fit (MFFA),65.62,154,644,24626.13,0.0,0.0,0.0,0,0.0,0.0,0,0,0.1867,7644,7644,100.0
+Round Robin (RRA),13.37,798,0,77032.51,0.0,0.0,0.0,0,0.0,0.0,0,782,0.0576,7644,7644,100.0
+Sercon,65.62,154,644,24626.13,0.0,0.0,0.0,0,0.0,0.0,0,0,0.1867,7644,7644,100.0
+Proposed (LSTM + K-Means++ + ACO),66.05,152,646,24479.19,0.0,0.0,0.0,0,0.0,0.0,0,0,0.1768,7644,7644,100.0

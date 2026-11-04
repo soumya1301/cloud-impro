@@ -1,0 +1,39 @@
+# Data extraction and subset configuration
+project_id: "project-192d863e-4e9a-4a5d-96f"
+processed_bucket: "gs://clusterdata-2019-processed-1002024056565"
+
+source_buckets:
+  a: "gs://clusterdata_2019_a"
+  b: "gs://clusterdata_2019_b"
+  c: "gs://clusterdata_2019_c"
+  d: "gs://clusterdata_2019_d"
+  e: "gs://clusterdata_2019_e"
+  f: "gs://clusterdata_2019_f"
+  g: "gs://clusterdata_2019_g"
+  h: "gs://clusterdata_2019_h"
+
+target_cells:
+  primary: "d"      # Worker A cell with 100% completed instance_events (2,123 shards)
+  secondary: "h"    # Worker B cell with 100% completed instance_events (1,210 shards)
+
+paths:
+  manifest_csv: "data/manifests/google_cluster_2019_full_manifest.csv"
+  inventory_summary_csv: "data/manifests/google_cluster_2019_inventory_summary.csv"
+  raw_dir: "data/raw"
+  interim_dir: "data/interim"
+  processed_dir: "data/processed"
+  samples_dir: "data/samples"
+
+subsets:
+  subset_a:
+    name: "prediction_and_profiling"
+    target_vms: 3000
+    observation_window_minutes: 5
+    trace_duration_hours: 24
+    time_step_seconds: 300   # 5-minute aggregation window
+  subset_b:
+    name: "scheduling_simulation"
+    target_vms: 7644         # Aligns with Alelyani et al. (2026) scale
+    target_pms: 798          # Aligns with Alelyani et al. (2026) scale
+    simulation_duration_hours: 24
+

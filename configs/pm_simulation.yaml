@@ -1,0 +1,40 @@
+# Physical Machine (PM) Simulation Configuration
+cluster:
+  num_pms: 798                     # Matches Alelyani et al. (2026) scale
+  network_topology: "fat-tree"
+  network_bandwidth_gbps: 4.0      # 4 Gbps per PM
+
+pm_types:
+  standard_g5:
+    share: 0.70
+    cpu_capacity: 1.0              # Normalized Google Compute Units
+    mem_capacity: 0.5              # Normalized memory ratio
+    idle_power_w: 93.7
+    max_power_w: 135.0
+    sleep_power_w: 10.0
+  high_mem_g5:
+    share: 0.20
+    cpu_capacity: 1.0
+    mem_capacity: 1.0
+    idle_power_w: 98.0
+    max_power_w: 145.0
+    sleep_power_w: 12.0
+  compact_g4:
+    share: 0.10
+    cpu_capacity: 0.5
+    mem_capacity: 0.333
+    idle_power_w: 86.0
+    max_power_w: 117.0
+    sleep_power_w: 10.0
+
+thresholds:
+  policy: "dynamic"                # dynamic vs static
+  static:
+    upper: 0.75                    # 75% upper limit
+    lower: 0.35                    # 35% lower limit
+  dynamic:
+    base_upper: 0.75
+    base_lower: 0.35
+    safety_margin: 0.10            # Backs off upper threshold if predicted load is rising
+    max_cpu_intensive_ratio: 0.25  # Invariant: <= 25% CPU-intensive VMs per PM
+

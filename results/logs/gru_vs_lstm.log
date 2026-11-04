@@ -1,0 +1,18 @@
+[2026-11-03 20:08:48] [INFO] [train_gru_vs_lstm]: Loading time series dataset from data/processed/subset_a_prediction_timeseries.parquet
+[2026-11-03 20:08:48] [INFO] [train_gru_vs_lstm]: Selected 600 representative workload entities with 42,199 observations.
+[2026-11-03 20:08:48] [INFO] [train_gru_vs_lstm]: === Comparative Evaluation for Horizon: 10m (10 min ahead) ===
+[2026-11-03 20:08:48] [INFO] [train_gru_vs_lstm]: Loading existing LSTM checkpoint from models/checkpoints/lstm_10m.pt
+[2026-11-03 20:08:49] [INFO] [train_gru_vs_lstm]: Training GRU model for horizon 10m...
+[2026-11-03 20:09:32] [INFO] [train_gru_vs_lstm]: [10m] LSTM - MAE: 0.00455, RMSE: 0.01328, R2: 0.5924, Latency: 3.406ms
+[2026-11-03 20:09:32] [INFO] [train_gru_vs_lstm]: [10m] GRU  - MAE: 0.00470, RMSE: 0.01366, R2: 0.5690, Latency: 3.572ms
+[2026-11-03 20:09:33] [INFO] [train_gru_vs_lstm]: === Comparative Evaluation for Horizon: 30m (30 min ahead) ===
+[2026-11-03 20:09:33] [INFO] [train_gru_vs_lstm]: Loading existing LSTM checkpoint from models/checkpoints/lstm_30m.pt
+[2026-11-03 20:09:35] [INFO] [train_gru_vs_lstm]: Training GRU model for horizon 30m...
+[2026-11-03 20:10:15] [INFO] [train_gru_vs_lstm]: [30m] LSTM - MAE: 0.00497, RMSE: 0.01371, R2: 0.5750, Latency: 5.505ms
+[2026-11-03 20:10:15] [INFO] [train_gru_vs_lstm]: [30m] GRU  - MAE: 0.00510, RMSE: 0.01433, R2: 0.5361, Latency: 4.405ms
+[2026-11-03 20:10:15] [INFO] [train_gru_vs_lstm]: === Comparative Evaluation for Horizon: 60m (60 min ahead) ===
+[2026-11-03 20:10:15] [INFO] [train_gru_vs_lstm]: Loading existing LSTM checkpoint from models/checkpoints/lstm_60m.pt
+[2026-11-03 20:10:17] [INFO] [train_gru_vs_lstm]: Training GRU model for horizon 60m...
+[2026-11-03 20:10:52] [INFO] [train_gru_vs_lstm]: [60m] LSTM - MAE: 0.00531, RMSE: 0.01429, R2: 0.5444, Latency: 5.379ms
+[2026-11-03 20:10:52] [INFO] [train_gru_vs_lstm]: [60m] GRU  - MAE: 0.00571, RMSE: 0.01478, R2: 0.5124, Latency: 3.572ms
+[2026-11-03 20:10:52] [INFO] [train_gru_vs_lstm]: Saved GRU vs LSTM comparison to results/tables/table_gru_vs_lstm_prediction.csv

@@ -1,0 +1,4 @@
+K,cluster_id,label,vm_count,percentage,cpu_centroid,mem_centroid
+3,0,Balanced Moderate,1050,35.0,0.0007,0.0033
+3,1,Balanced High,12,0.4,0.0536,0.0454
+3,2,Balanced Moderate,1938,64.6,0.0066,0.0013
